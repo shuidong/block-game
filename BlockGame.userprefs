@@ -1,0 +1,31 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Blocks/Block.cs">
+    <Files>
+      <File FileName="Assets/Scripts/World/ModifyTerrain.cs" Line="119" Column="3" />
+      <File FileName="Assets/Scripts/Blocks/Block.cs" Line="13" Column="25" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Assembly-CSharp" expanded="True">
+            <Node name="Art" expanded="True">
+              <Node name="UI" expanded="True" />
+            </Node>
+            <Node name="Scripts" expanded="True">
+              <Node name="Blocks" expanded="True">
+                <Node name="Block.cs" selected="True" />
+              </Node>
+              <Node name="Rendering" expanded="True" />
+              <Node name="World" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
