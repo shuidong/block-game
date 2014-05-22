@@ -105,10 +105,10 @@ MonoBehaviour:
   worldName: World 1
   spawnPoint: {x: 0, y: 100, z: 0}
   height: 10
-  loadRange: 5
-  unloadRange: 5
+  loadRange: 6
+  unloadRange: 6
   chunkSize: 15
-  chunkPrefab: {fileID: 100000, guid: fd32b13ee929c44a5b62dd4724428d08, type: 2}
+  columnPrefab: {fileID: 100000, guid: 165093b5866854ea8baa11c3462ef371, type: 2}
   playerPrefab: {fileID: 100000, guid: 15b71bb1c85dd411ea75a7fa0ac63b4c, type: 2}
 --- !u!4 &22076495
 Transform:

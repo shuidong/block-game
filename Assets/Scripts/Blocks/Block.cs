@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public abstract class Block {
@@ -8,7 +8,7 @@ public abstract class Block {
 	public bool normalCube = true;
 	public TextureLayout textures;
 
-	public virtual void Render(MeshBuildInfo current, WorldChunk chunk, int x, int y, int z) {
+	public virtual void Render(MeshBuildInfo current, Chunk chunk, int x, int y, int z) {
 		Block[] blocks = ListBlocks.instance.blocks;
 		Vector3 center = Vector3.one/2f;
 		Vector3 size = Vector3.one;

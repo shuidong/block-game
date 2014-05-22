@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class BlockAir : Block {
@@ -7,7 +7,7 @@ public class BlockAir : Block {
 		normalCube = false;
 	}
 
-	public override void Render(MeshBuildInfo current, WorldChunk chunk, int x, int y, int z) {
+	public override void Render(MeshBuildInfo current, Chunk chunk, int x, int y, int z) {
 	}
 }
 

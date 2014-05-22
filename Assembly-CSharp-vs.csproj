@@ -71,10 +71,11 @@
      <Compile Include="Assets\Scripts\Rendering\MeshBuildInfo.cs" />
      <Compile Include="Assets\Scripts\Rendering\TextureLayout.cs" />
      <Compile Include="Assets\Scripts\Rendering\Vertex.cs" />
+     <Compile Include="Assets\Scripts\World\Chunk.cs" />
+     <Compile Include="Assets\Scripts\World\ChunkColumn.cs" />
      <Compile Include="Assets\Scripts\World\GameWorld.cs" />
      <Compile Include="Assets\Scripts\World\ModifyTerrain.cs" />
      <Compile Include="Assets\Scripts\World\Noise.cs" />
-     <Compile Include="Assets\Scripts\World\WorldChunk.cs" />
      <None Include="Assets\Standard Assets\Mobile\Shaders\Particle Shaders\Mobile Multiply Culled.shader" />
      <None Include="Assets\Standard Assets\Toon Shading\Sources\Shaders\Toony-Basic.shader" />
      <None Include="Assets\Standard Assets\Mobile\Shaders\Miscellaneous Shaders\Mobile Background.shader" />
