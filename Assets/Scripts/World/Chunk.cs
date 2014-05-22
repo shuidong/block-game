@@ -12,7 +12,6 @@ public class Chunk : MonoBehaviour {
 	
 	// meshes
 	private Mesh mesh;
-	private MeshCollider col;
 
 	// world
 	[HideInInspector]
@@ -21,14 +20,13 @@ public class Chunk : MonoBehaviour {
 	public ChunkColumn column;
 
 	// this chunk
-	//[HideInInspector]
+	[HideInInspector]
 	public Vector3 location;
 	public bool needsUpdate;
 	public bool modified;
-
+	
 	void Awake() {
 		mesh = GetComponent<MeshFilter> ().mesh;
-		col = GetComponent<MeshCollider> ();
 	}
 
 	void Start() {
@@ -49,12 +47,12 @@ public class Chunk : MonoBehaviour {
 
 	}
 
-	/*void OnDrawGizmosSelected() {
+	void OnDrawGizmosSelected() {
 		Vector3 size = Vector3.one * chunkSize;
 		Vector3 center = transform.position + size / 2;
 		Gizmos.color = Color.black;
 		Gizmos.DrawWireCube (center, size);
-	}*/
+	}
 
 	public byte LocalBlock (int x, int y, int z, byte def)
 	{
@@ -86,10 +84,6 @@ public class Chunk : MonoBehaviour {
 		mesh.triangles = newTrianglesArr;
 		mesh.Optimize ();
 		mesh.RecalculateNormals ();
-		
-		col.sharedMesh = null;
-		col.sharedMesh = mesh;
-		
 		newMesh.Clear ();
 	}
 }

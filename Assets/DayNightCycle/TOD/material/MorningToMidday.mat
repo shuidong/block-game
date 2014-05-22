@@ -120,7 +120,7 @@ Material:
       data:
         first:
           name: _Tint
-        second: {r: .441145867, g: .478166431, b: .546164274, a: 0}
+        second: {r: .441168189, g: .478184313, b: .546175063, a: 0}
       data:
         first:
           name: _FogTint

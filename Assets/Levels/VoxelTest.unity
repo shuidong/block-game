@@ -107,9 +107,11 @@ MonoBehaviour:
   height: 10
   loadRange: 6
   unloadRange: 6
+  loadDynamically: 1
   chunkSize: 15
   columnPrefab: {fileID: 100000, guid: 165093b5866854ea8baa11c3462ef371, type: 2}
   playerPrefab: {fileID: 100000, guid: 15b71bb1c85dd411ea75a7fa0ac63b4c, type: 2}
+  player: {fileID: 0}
 --- !u!4 &22076495
 Transform:
   m_ObjectHideFlags: 0

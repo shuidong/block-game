@@ -9,6 +9,7 @@ public class GameWorld : MonoBehaviour {
 	public int height = 2;
 	public int loadRange = 5;
 	public int unloadRange = 7;
+	public bool loadDynamically = true;
 
 	// instantiation info
 	public int chunkSize = 15;
@@ -16,7 +17,8 @@ public class GameWorld : MonoBehaviour {
 	public GameObject playerPrefab;
 
 	// currently loaded state
-	private GameObject player;
+	[HideInInspector]
+	public GameObject player;
 	private Dictionary<Vector2, ChunkColumn> loadedWorld;
 
 	void Start ()
@@ -33,38 +35,44 @@ public class GameWorld : MonoBehaviour {
 	IEnumerator LoadChunksCoroutine() {
 		while (true) {
 			Vector3 playerPos = spawnPoint;
-			if (player) playerPos = player.transform.position;
+			if (player)
+				playerPos = player.transform.position;
 
 			Vector2 playerLoc = GetColumnLocation ((int)playerPos.x, (int)playerPos.z);
 
-			List<Vector2> removalList = new List<Vector2>();
+			List<Vector2> removalList = new List<Vector2> ();
 
-			// mark chunks for unload
-			foreach (ChunkColumn col in loadedWorld.Values) {
-				float dist = Vector2.Distance(playerLoc, col.location);
-				if (Mathf.Ceil(dist) >= unloadRange) {
-					removalList.Add(col.location);
-				}
-			}
+			if (!player || loadDynamically) {
 
-			// unload marked chunks
-			foreach (Vector2 loc in removalList) {
-				UnloadColumn((int)loc.x, (int)loc.y);
-			}
-
-			// load needed chunks
-			for (int x = (int)playerLoc.x-loadRange; x <= (int)playerLoc.x+loadRange; x++) {
-				for (int z = (int)playerLoc.y-loadRange; z <= (int)playerLoc.y+loadRange; z++) {
-					Vector2 loc = new Vector2(x, z);
-
-					float dist = Vector2.Distance(playerLoc, loc);
-					if (Mathf.Ceil(dist) < loadRange && !loadedWorld.ContainsKey(loc)) {
-						LoadColumn(x, z);
-						if (player)
-							yield return new WaitForSeconds(.1f);
+				// mark chunks for unload
+					foreach (ChunkColumn col in loadedWorld.Values) {
+						float dist = Vector2.Distance (playerLoc, col.location);
+						if (Mathf.Ceil (dist) >= unloadRange) {
+							removalList.Add (col.location);
+						}
 					}
-	            }
-	        }
+
+				// unload marked chunks
+				foreach (Vector2 loc in removalList) {
+					UnloadColumn ((int)loc.x, (int)loc.y);
+				}
+
+				// load needed chunks
+				for (int x = (int)playerLoc.x-loadRange; x <= (int)playerLoc.x+loadRange; x++) {
+					for (int z = (int)playerLoc.y-loadRange; z <= (int)playerLoc.y+loadRange; z++) {
+						Vector2 loc = new Vector2 (x, z);
+
+						float dist = Vector2.Distance (playerLoc, loc);
+						if (Mathf.Ceil (dist) < loadRange && !loadedWorld.ContainsKey (loc)) {
+							LoadColumn (x, z);
+							if (player)
+								yield return new WaitForSeconds (.05f);
+						}
+					}
+				}
+
+			}
+
 			yield return new WaitForSeconds(1);
 
 			if (!player) {
@@ -99,10 +107,13 @@ public class GameWorld : MonoBehaviour {
 
 	int mod(int k, int n) { return ((k %= n) < 0) ? k+n : k;  }
 
-	/**
-	 * Get the block at the specified position in world coords. 
-	 * If the block is not loaded, def is returned
-	 */
+	public byte Block (Vector3 pos, byte def) {
+		int x = (int)pos.x;
+		int y = (int)pos.y;
+		int z = (int)pos.z;
+		return Block (x, y, z, def);
+	}
+
 	public byte Block (int x, int y, int z, byte def)
 	{
 		Vector2 loc = GetColumnLocation (x, z);
@@ -126,6 +137,8 @@ public class GameWorld : MonoBehaviour {
 			column.world = this;
 			column.height = height;
 			column.location = loc;
+			column.chunkSize = chunkSize;
+			column.data = new byte[chunkSize,height*chunkSize,chunkSize];
 			loadedWorld.Add(loc, column);
 		}
 	}

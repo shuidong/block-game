@@ -17,8 +17,8 @@ public class ChunkColumn : MonoBehaviour {
 	public int chunkSize;
 
 	void Start() {
-		chunkSize = world.chunkSize;
-		data = new byte[chunkSize,height*chunkSize,chunkSize];
+		//chunkSize = world.chunkSize;
+		//data = new byte[chunkSize,height*chunkSize,chunkSize];
 		chunks = new Chunk[height];
 
 		// instantiate chunks
@@ -36,7 +36,6 @@ public class ChunkColumn : MonoBehaviour {
 		}
 
 		// build data
-		//GenerateTerrain ();
 		new Thread (new ThreadStart (GenerateTerrain)).Start ();
 	}
 

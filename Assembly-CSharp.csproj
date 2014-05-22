@@ -67,6 +67,7 @@
      <Compile Include="Assets\Scripts\Misc\DeviceSpecifics.cs" />
      <Compile Include="Assets\Scripts\Misc\FixSpriteRenderer.cs" />
      <Compile Include="Assets\Scripts\Misc\HUDFPS.cs" />
+     <Compile Include="Assets\Scripts\Physics\CollisionMaker.cs" />
      <Compile Include="Assets\Scripts\Rendering\CubeRenderer.cs" />
      <Compile Include="Assets\Scripts\Rendering\MeshBuildInfo.cs" />
      <Compile Include="Assets\Scripts\Rendering\TextureLayout.cs" />
