@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Threading;
 
 public class ChunkColumn : MonoBehaviour {
 	[HideInInspector]
@@ -35,7 +36,8 @@ public class ChunkColumn : MonoBehaviour {
 		}
 
 		// build data
-		GenerateTerrain ();
+		//GenerateTerrain ();
+		new Thread (new ThreadStart (GenerateTerrain)).Start ();
 	}
 
 	public byte LocalBlock(int x, int y, int z, byte def) {
