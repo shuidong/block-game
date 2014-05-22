@@ -21,6 +21,7 @@ public class ListBlocks : MonoBehaviour {
 		blocks[STONE] = new BlockStone ();
 		blocks[GRASS] = new BlockGrass ();
 		blocks[DIRT] = new BlockDirt ();
+		blocks[4] = new BlockSlab ();
 
 		// set IDs
 		for (int i = 0; i < blocks.Length; i++) {

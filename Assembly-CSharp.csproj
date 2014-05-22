@@ -55,6 +55,7 @@
      <Compile Include="Assets\Scripts\Blocks\BlockAir.cs" />
      <Compile Include="Assets\Scripts\Blocks\BlockDirt.cs" />
      <Compile Include="Assets\Scripts\Blocks\BlockGrass.cs" />
+     <Compile Include="Assets\Scripts\Blocks\BlockSlab.cs" />
      <Compile Include="Assets\Scripts\Blocks\BlockStone.cs" />
      <Compile Include="Assets\Scripts\Blocks\ListBlocks.cs" />
      <Compile Include="Assets\Scripts\Input\FPSInputController.cs" />

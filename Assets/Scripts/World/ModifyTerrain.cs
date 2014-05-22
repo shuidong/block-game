@@ -5,6 +5,7 @@ public class ModifyTerrain : MonoBehaviour
 {
 	GameWorld world;
 	GameObject cameraObject;
+	public float smallestBlockThickness = 0.2f;
 
 	void Start ()
 	{
@@ -88,7 +89,7 @@ public class ModifyTerrain : MonoBehaviour
 	{
 		//removes a block at these impact coordinates, you can raycast against the terrain and call this with the hit.point
 		Vector3 position = hit.point;
-		position += (hit.normal * -0.5f);
+		position += (hit.normal * -smallestBlockThickness);
 		
 		SetBlockAt (position, block);
 	}
@@ -97,7 +98,7 @@ public class ModifyTerrain : MonoBehaviour
 	{
 		//adds the specified block at these impact coordinates, you can raycast against the terrain and call this with the hit.point
 		Vector3 position = hit.point;
-		position += (hit.normal * 0.5f);
+		position += (hit.normal * (1-smallestBlockThickness));
 		
 		SetBlockAt (position, block);
 		

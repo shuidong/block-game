@@ -16,17 +16,12 @@ public class CollisionMaker : MonoBehaviour {
 		for (int x = 0; x < points.GetLength(0); x++) {
 			for (int y = 0; y < points.GetLength(1); y++) {
 				for (int z = 0; z < points.GetLength(2); z++) {
-					Vector3 boxOffset = origin + new Vector3(x, y, z);
-
 					BoxCollider b = gameObject.AddComponent<BoxCollider>();
 					points[x,y,z] = b;
-
-					b.center = boxOffset;
-					b.size = Vector3.one;
-					b.enabled = false;
 				}
 			}
 		}
+		UpdateColliders ();
 	}
 
 	void LateUpdate() {
@@ -49,12 +44,18 @@ public class CollisionMaker : MonoBehaviour {
 			for (int y = 0; y < points.GetLength(1); y++) {
 				for (int z = 0; z < points.GetLength(2); z++) {
 					Vector3 boxOffset = origin + new Vector3(x, y, z);
-					byte block = world.Block(boxOffset + myPos, ListBlocks.STONE);
+					byte blockID = world.Block(boxOffset + myPos, ListBlocks.STONE);
 					BoxCollider boxCollider = points[x,y,z];
-					if(ListBlocks.instance.blocks[block].normalCube) {
+					Block block = ListBlocks.instance.blocks[blockID];
+					if(block.collide) {
 						boxCollider.enabled = true;
-					} else {
+						Bounds shape = block.GetBounds();
+						boxCollider.center = boxOffset + shape.center;
+						boxCollider.size = shape.size;
+					} else if(boxCollider.enabled) {
 						boxCollider.enabled = false;
+						boxCollider.center = Vector3.zero;
+						boxCollider.size = Vector3.one;
 					}
 				}
 			}
