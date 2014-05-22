@@ -169,10 +169,12 @@ public class GameWorld : MonoBehaviour {
 	public void UpdateChunkAt (int x, int y, int z)
 	{ 
 		//Updates the chunk containing this block
-		Vector3 loc = GetChunkLocation (x, y, z);
-		ChunkColumn col;
-		if (loadedWorld.TryGetValue (new Vector2(loc.x, loc.z), out col)) {
-			col.chunks[(int)loc.y].modified = true;
-        }
+		if (y >= 0 && y < height * chunkSize) {
+			Vector3 loc = GetChunkLocation (x, y, z);
+			ChunkColumn col;
+			if (loadedWorld.TryGetValue (new Vector2 (loc.x, loc.z), out col)) {
+				col.chunks [(int)loc.y].modified = true;
+			}
+		}
     }
 }
