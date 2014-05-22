@@ -105,9 +105,9 @@ public class GameWorld : MonoBehaviour {
 	 */
 	public byte Block (int x, int y, int z, byte def)
 	{
-		Vector3 loc = GetChunkLocation (x, y, z);
+		Vector2 loc = GetColumnLocation (x, z);
 		ChunkColumn column;
-		
+
 		// return the block if it's loaded
 		if (loadedWorld.TryGetValue (loc, out column)) {
 			return column.LocalBlock(mod(x, chunkSize), y, mod(z, chunkSize));
