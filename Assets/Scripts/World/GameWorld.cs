@@ -120,7 +120,7 @@ public class GameWorld : MonoBehaviour {
 		ChunkColumn column;
 
 		// return the block if it's loaded
-		if (loadedWorld.TryGetValue (loc, out column)) {
+		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
 			return column.LocalBlock(mod(x, chunkSize), y, mod(z, chunkSize));
         }
         
@@ -168,7 +168,7 @@ public class GameWorld : MonoBehaviour {
 		//sets the specified block at these coordinates
 		Vector2 loc = GetColumnLocation (x, z);
 		ChunkColumn col;
-		if (loadedWorld.TryGetValue (loc, out col)) {
+		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out col)) {
 			int cX = mod (x, chunkSize);
 			int cZ = mod (z, chunkSize);
 			col.data[cX, y, cZ] = block;
