@@ -39,10 +39,8 @@ public abstract class Block {
 	}
 
 	public virtual void OnCreate(GameWorld world, int x, int y, int z) {
-		Debug.Log (name + " created");
 	}
 
 	public virtual void OnRemove(GameWorld world, int x, int y, int z) {
-		Debug.Log (name + " removed");
 	}
 }
