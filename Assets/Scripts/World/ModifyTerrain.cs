@@ -115,8 +115,8 @@ public class ModifyTerrain : MonoBehaviour
 		Block[] blocks = ListBlocks.instance.blocks;
 
 		byte currentBlock = world.Block (x, y, z, ListBlocks.AIR);
-		blocks [currentBlock].OnRemove (world, x, y, z);
+		blocks [currentBlock].OnBreak (world, x, y, z);
 		world.SetBlockAt (x, y, z, newBlock);
-		blocks [newBlock].OnCreate (world, x, y, z);
+		blocks [newBlock].OnBuild (world, x, y, z);
 	}
 }

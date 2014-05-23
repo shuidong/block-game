@@ -105,8 +105,8 @@ MonoBehaviour:
   worldName: World 1
   spawnPoint: {x: 0, y: 100, z: 0}
   height: 10
-  loadRange: 6
-  unloadRange: 6
+  loadRange: 8
+  unloadRange: 8
   loadDynamically: 1
   chunkSize: 15
   columnPrefab: {fileID: 100000, guid: 165093b5866854ea8baa11c3462ef371, type: 2}
@@ -134,6 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0161e5271f97444e4ba083ac37c2c041, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  smallestBlockThickness: .200000003
 --- !u!1 &61367239
 GameObject:
   m_ObjectHideFlags: 0

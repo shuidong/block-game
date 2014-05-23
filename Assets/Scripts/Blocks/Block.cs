@@ -49,9 +49,15 @@ public abstract class Block {
 		return new Bounds (Vector3.zero, Vector3.one);
 	}
 
-	public virtual void OnCreate(GameWorld world, int x, int y, int z) {
+	public virtual void OnLoad(GameWorld world, int x, int y, int z) {
+    }
+
+	public virtual void OnBuild(GameWorld world, int x, int y, int z) {
+    }
+
+	public virtual void OnBreak(GameWorld world, int x, int y, int z) {
 	}
 
-	public virtual void OnRemove(GameWorld world, int x, int y, int z) {
-	}
+	public virtual void OnUnload(GameWorld world, int x, int y, int z) {
+    }
 }

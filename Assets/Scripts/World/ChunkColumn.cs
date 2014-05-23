@@ -17,8 +17,6 @@ public class ChunkColumn : MonoBehaviour {
 	public int chunkSize;
 
 	void Start() {
-		//chunkSize = world.chunkSize;
-		//data = new byte[chunkSize,height*chunkSize,chunkSize];
 		chunks = new Chunk[height];
 
 		// instantiate chunks
@@ -58,30 +56,50 @@ public class ChunkColumn : MonoBehaviour {
 		int startX = (int)location.x * chunkSize;
 		int startZ = (int)location.y * chunkSize;
 		
-		ListBlocks blocks = ListBlocks.instance;
-		byte stoneID = blocks.FindByName ("Stone").id;
-		byte dirtID = blocks.FindByName ("Dirt").id;
-		byte grassID = blocks.FindByName ("Grass").id;
+		Block[] blocks = ListBlocks.instance.blocks;
+		byte stoneID = ListBlocks.STONE;
+		byte dirtID = ListBlocks.DIRT;
+		byte grassID = ListBlocks.GRASS;
 		
 		for (int x=startX; x<startX + chunkSize; x++) {
 			for (int z=startZ; z<startZ + chunkSize; z++) {
 				int stone = 40 + PerlinNoise (x, 0, z, 25, 7, 1.5f);
 				int dirt = stone + PerlinNoise (x, 0, z, 25, 2, 1.0f) + 1;
-				
+
+				int bX = x - startX;
+				int bZ = z - startZ;
+
 				for (int y=0; y < height * chunkSize; y++) {
 					if (y <= stone) {
-						data [x - startX, y, z - startZ] = stoneID;
+						data [bX, y, bZ] = stoneID;
 					} else if (y < dirt) {
-                        data [x - startX, y, z - startZ] = dirtID;
+                        data [bX, y, bZ] = dirtID;
                     } else if (y == dirt) {
-                        data [x - startX, y, z - startZ] = grassID;
+                        data [bX, y, bZ] = grassID;
                     }
+
+					blocks[data[bX, y, bZ]].OnLoad(world, x, y, z);
                 }
             }
 		}
 
 		foreach (Chunk c in chunks) {
 			c.modified = true;
+		}
+	}
+
+	void OnDestroy() {
+		Block[] blocks = ListBlocks.instance.blocks;
+		int startX = (int)location.x * chunkSize;
+		int startZ = (int)location.y * chunkSize;
+		for (int x=startX; x<startX + chunkSize; x++) {
+			for (int z=startZ; z<startZ + chunkSize; z++) {
+				for (int y=0; y < height * chunkSize; y++) {
+					int bX = x - startX;
+					int bZ = z - startZ;
+					blocks[data[bX, y, bZ]].OnUnload(world, x, y, z);
+				}
+			}
 		}
 	}
 	
