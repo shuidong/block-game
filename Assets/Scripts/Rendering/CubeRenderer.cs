@@ -96,7 +96,13 @@ public class CubeRenderer {
 		current.triangles.Add (faceCount * 4); //1
 		current.triangles.Add (faceCount * 4 + 2); //3
 		current.triangles.Add (faceCount * 4 + 3); //4
-		
+
+		Color color = 1/8f * (Color.white / 2);
+		current.colors.Add (color);
+		current.colors.Add (color);
+		current.colors.Add (color);
+		current.colors.Add (color);
+
 		float tUnit = 1f / tSize;
 		
 		current.uv.Add (new Vector2 (tUnit * texturePos.x + tUnit, tUnit * texturePos.y));

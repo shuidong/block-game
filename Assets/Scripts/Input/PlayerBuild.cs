@@ -10,6 +10,8 @@ public class PlayerBuild : MonoBehaviour {
 	private CollisionMaker collisionMaker;
 
 	void Start() {
+		Screen.lockCursor = true;
+		Screen.showCursor = false;
 		if (collisionMakerPrefab) {
 			GameObject newObject = Instantiate (collisionMakerPrefab) as GameObject;
 			collisionMaker = newObject.GetComponent<CollisionMaker> ();

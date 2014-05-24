@@ -9,6 +9,7 @@ public class Chunk : MonoBehaviour {
 	private Vector3[] newVerticesArr;
 	private int[] newTrianglesArr;
 	private Vector2[] newUVArr;
+	private Color[] newColorsArr;
 	
 	// meshes
 	private Mesh mesh;
@@ -74,6 +75,7 @@ public class Chunk : MonoBehaviour {
 		newVerticesArr = newMesh.vertices.ToArray ();
 		newUVArr = newMesh.uv.ToArray ();
 		newTrianglesArr = newMesh.triangles.ToArray ();
+		newColorsArr = newMesh.colors.ToArray ();
 	}
 
 	private void UpdateMesh ()
@@ -82,6 +84,7 @@ public class Chunk : MonoBehaviour {
 		mesh.vertices = newVerticesArr;
 		mesh.uv = newUVArr;
 		mesh.triangles = newTrianglesArr;
+		mesh.colors = newColorsArr;
 		mesh.Optimize ();
 		mesh.RecalculateNormals ();
 		newMesh.Clear ();
