@@ -1,4 +1,6 @@
 fileFormatVersion: 2
 guid: 32eb49ac7f7bc416a9c80f2890f840c2
+labels:
+- Terrain
 NativeFormatImporter:
   userData: 
