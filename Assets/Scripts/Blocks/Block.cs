@@ -7,6 +7,7 @@ public abstract class Block {
 	public bool indestructable = false;
 	public bool normalCube = true;
 	public bool collide = true;
+	public bool opaque = true;
 	public TextureLayout textures;
 
 	public virtual void Render(MeshBuildInfo current, Chunk chunk, int x, int y, int z) {
@@ -17,30 +18,36 @@ public abstract class Block {
 		byte def = ListBlocks.AIR;
 
 		if (!normalCube) {
-			CubeRenderer.Cube(current, x, y, z, textures, center, size);
+			//CubeRenderer.Cube(current, x, y, z, textures, center, size);
 		} else {
 			if (!blocks [chunk.LocalBlock (x, y + 1, z, def)].normalCube) {
-				CubeRenderer.CubeTop (current, x, y, z, textures, center, size);
+				byte light = chunk.LocalLight (x, y+1, z, 0);
+				CubeRenderer.CubeTop (current, x, y, z, textures, center, size, light);
 			}
 		
 			if (!blocks [chunk.LocalBlock (x, y - 1, z, def)].normalCube) {
-				CubeRenderer.CubeBottom (current, x, y, z, textures, center, size);
+				byte light = chunk.LocalLight (x, y-1, z, 0);
+				CubeRenderer.CubeBottom (current, x, y, z, textures, center, size, light);
 			}
 		
 			if (!blocks [chunk.LocalBlock (x + 1, y, z, def)].normalCube) {
-				CubeRenderer.CubeEast (current, x, y, z, textures, center, size);
+				byte light = chunk.LocalLight (x+1, y, z, 0);
+				CubeRenderer.CubeEast (current, x, y, z, textures, center, size, light);
 			}
 		
 			if (!blocks [chunk.LocalBlock (x - 1, y, z, def)].normalCube) {
-				CubeRenderer.CubeWest (current, x, y, z, textures, center, size);
+				byte light = chunk.LocalLight (x-1, y, z, 0);
+				CubeRenderer.CubeWest (current, x, y, z, textures, center, size, light);
 			}
 		
 			if (!blocks [chunk.LocalBlock (x, y, z + 1, def)].normalCube) {
-				CubeRenderer.CubeNorth (current, x, y, z, textures, center, size);
+				byte light = chunk.LocalLight (x, y, z+1, 0);
+				CubeRenderer.CubeNorth (current, x, y, z, textures, center, size, light);
 			}
 		
 			if (!blocks [chunk.LocalBlock (x, y, z - 1, def)].normalCube) {
-				CubeRenderer.CubeSouth (current, x, y, z, textures, center, size);
+				byte light = chunk.LocalLight (x, y, z-1, 0);
+				CubeRenderer.CubeSouth (current, x, y, z, textures, center, size, light);
 			}
 		}
 	}

@@ -2,10 +2,11 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class GameWorld : MonoBehaviour {
+public class GameWorld : MonoBehaviour
+{
 	// world settings
 	public string worldName = "World 1";
-	public Vector3 spawnPoint = new Vector3(0, 30, 0);
+	public Vector3 spawnPoint = new Vector3 (0, 30, 0);
 	public int height = 2;
 	public int loadRange = 5;
 	public int unloadRange = 7;
@@ -18,8 +19,11 @@ public class GameWorld : MonoBehaviour {
 
 	// currently loaded state
 	[HideInInspector]
-	public GameObject player;
-	private Dictionary<Vector2, ChunkColumn> loadedWorld;
+	public GameObject
+		player;
+	[HideInInspector]
+	public Dictionary<Vector2, ChunkColumn>
+		loadedWorld;
 
 	void Start ()
 	{
@@ -28,11 +32,13 @@ public class GameWorld : MonoBehaviour {
 		LoadChunks ();
 	}
 
-	public void LoadChunks() {
-		StartCoroutine (LoadChunksCoroutine());
+	public void LoadChunks ()
+	{
+		StartCoroutine (LoadChunksCoroutine ());
 	}
 
-	IEnumerator LoadChunksCoroutine() {
+	IEnumerator LoadChunksCoroutine ()
+	{
 		while (true) {
 			Vector3 playerPos = spawnPoint;
 			if (player)
@@ -45,12 +51,12 @@ public class GameWorld : MonoBehaviour {
 			if (!player || loadDynamically) {
 
 				// mark chunks for unload
-					foreach (ChunkColumn col in loadedWorld.Values) {
-						float dist = Vector2.Distance (playerLoc, col.location);
-						if (Mathf.Ceil (dist) >= unloadRange) {
-							removalList.Add (col.location);
-						}
+				foreach (ChunkColumn col in loadedWorld.Values) {
+					float dist = Vector2.Distance (playerLoc, col.location);
+					if (Mathf.Ceil (dist) >= unloadRange) {
+						removalList.Add (col.location);
 					}
+				}
 
 				// unload marked chunks
 				foreach (Vector2 loc in removalList) {
@@ -73,19 +79,20 @@ public class GameWorld : MonoBehaviour {
 
 			}
 
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds (1);
 
 			if (!player) {
 				// if the player hasn't been spawned, spawn it after 20 frames
 				for (int i = 0; i < 20; i++)
 					yield return null;
-				player = Instantiate(playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
-				player.GetComponent<PlayerBuild>().world = gameObject.GetComponent<ModifyTerrain>();
+				player = Instantiate (playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
+				player.GetComponent<PlayerBuild> ().world = gameObject.GetComponent<ModifyTerrain> ();
 			}
 		}
-    }
+	}
 
-	Vector3 GetChunkLocation(int x, int y, int z) {
+	Vector3 GetChunkLocation (int x, int y, int z)
+	{
 		Vector3 loc = new Vector3 (x / chunkSize, y / chunkSize, z / chunkSize);
 		if (x < 0 && x % chunkSize != 0)
 			loc.x--;
@@ -96,7 +103,8 @@ public class GameWorld : MonoBehaviour {
 		return loc;
 	}
 
-	Vector3 GetColumnLocation(int x, int z) {
+	Vector3 GetColumnLocation (int x, int z)
+	{
 		Vector2 loc = new Vector2 (x / chunkSize, z / chunkSize);
 		if (x < 0 && x % chunkSize != 0)
 			loc.x--;
@@ -105,9 +113,13 @@ public class GameWorld : MonoBehaviour {
 		return loc;
 	}
 
-	int mod(int k, int n) { return ((k %= n) < 0) ? k+n : k;  }
+	int mod (int k, int n)
+	{
+		return ((k %= n) < 0) ? k + n : k;
+	}
 
-	public byte Block (Vector3 pos, byte def) {
+	public byte Block (Vector3 pos, byte def)
+	{
 		int x = (int)pos.x;
 		int y = (int)pos.y;
 		int z = (int)pos.z;
@@ -118,17 +130,32 @@ public class GameWorld : MonoBehaviour {
 	{
 		Vector2 loc = GetColumnLocation (x, z);
 		ChunkColumn column;
-
+		
 		// return the block if it's loaded
 		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
-			return column.LocalBlock(mod(x, chunkSize), y, mod(z, chunkSize));
-        }
-        
-        // else return def
-        return def;
+			return column.LocalBlock (mod (x, chunkSize), y, mod (z, chunkSize));
+		}
+		
+		// else return def
+		return def;
 	}
 
-	void LoadColumn(int x, int z) {
+	public byte Light (int x, int y, int z, byte def)
+	{
+		Vector2 loc = GetColumnLocation (x, z);
+		ChunkColumn column;
+		
+		// return the block if it's loaded
+		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
+			return column.LocalLight (mod (x, chunkSize), y, mod (z, chunkSize));
+		}
+		
+		// else return def
+		return def;
+	}
+
+	void LoadColumn (int x, int z)
+	{
 		Vector2 loc = new Vector2 (x, z);
 		if (!loadedWorld.ContainsKey (loc)) {
 			GameObject newObject = Instantiate (columnPrefab, new Vector3 (x * chunkSize - 0.5f, 0, z * chunkSize - 0.5f), new Quaternion (0, 0, 0, 0)) as GameObject;
@@ -138,44 +165,105 @@ public class GameWorld : MonoBehaviour {
 			column.height = height;
 			column.location = loc;
 			column.chunkSize = chunkSize;
-			column.data = new byte[chunkSize,height*chunkSize,chunkSize];
-			loadedWorld.Add(loc, column);
+			column.blockData = new byte[chunkSize, height * chunkSize, chunkSize];
+			column.lightData = new byte[chunkSize, height * chunkSize, chunkSize];
+			loadedWorld.Add (loc, column);
 		}
 	}
 
-	void MarkColumnModified(int x, int z) {
-		Vector2 loc = new Vector2(x, z);
+	void MarkColumnModified (int x, int z)
+	{
+		Vector2 loc = new Vector2 (x, z);
 		if (loadedWorld.ContainsKey (loc)) {
-			ChunkColumn col = loadedWorld[loc];
+			ChunkColumn col = loadedWorld [loc];
 			for (int y=0; y<height; y++) {
-				col.chunks[y].modified = true;
+				col.chunks [y].modified = true;
 			}
 		}
 	}
 	
 	public void UnloadColumn (int x, int z)
 	{
-		Vector2 loc = new Vector2(x, z);
+		Vector2 loc = new Vector2 (x, z);
 		if (loadedWorld.ContainsKey (loc)) {
-			ChunkColumn col = loadedWorld[loc];
-			Object.Destroy(col.gameObject);
-			loadedWorld.Remove(loc);
+			ChunkColumn col = loadedWorld [loc];
+			Object.Destroy (col.gameObject);
+			loadedWorld.Remove (loc);
 		}
 	}
 
 	public void SetBlockAt (int x, int y, int z, byte block)
 	{
+		Block[] blocks = ListBlocks.instance.blocks;
+
+		print ("");
+		print ("Set: (" + x + "," + y + "," + z + ") -> " + blocks [block].name);
+
 		//sets the specified block at these coordinates
 		Vector2 loc = GetColumnLocation (x, z);
 		ChunkColumn col;
 		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out col)) {
+
 			int cX = mod (x, chunkSize);
 			int cZ = mod (z, chunkSize);
-			col.data[cX, y, cZ] = block;
-			for (int xx = -1; xx <= 1; xx++)
-				for (int yy = -1; yy <= 1; yy++)
-					for(int zz = -1; zz <= 1; zz++)
-						UpdateChunkAt (x+xx, y+yy, z+zz);
+
+			// set block
+			col.blockData [cX, y, cZ] = block;
+
+			// update lighting
+			if (col.CanSeeSky (cX, y, cZ)) {
+
+				print ("Can see sky");
+
+				// if block is exposed to the sun
+				int yy = y;
+				if (blocks [block].opaque) {
+					// remove light which passed through this point
+					while (yy >= 0 && (y == yy || !blocks[col.blockData[cX, yy, cZ]].opaque)) {
+						col.FloodFillDarkness (cX, yy, cZ, CubeRenderer.MAX_LIGHT + 1);
+						print ("Darken");
+						yy--;
+					}
+				} else {
+					// flood fill sunlight
+					while (yy >= 0 && (!blocks[col.blockData[cX, yy, cZ]].opaque)) {
+						col.FloodFillLight (cX, yy, cZ, CubeRenderer.MAX_LIGHT, true);
+						print ("Enlighten");
+						yy--;
+					}
+				}
+			} else {
+
+				print ("Can't see sky");
+
+				if (blocks [block].opaque) {
+					// remove light which passed through this point
+					print ("Darken");
+					col.FloodFillDarkness (cX, y, cZ, CubeRenderer.MAX_LIGHT + 1);
+				}
+			}
+
+			// update nearby blocks and their light
+			for (int xx = -1; xx <= 1; xx++) {
+				for (int yy = -1; yy <= 1; yy++) {
+					for (int zz = -1; zz <= 1; zz++) {
+						RefillLightAtPosition (x + xx, y + yy, z + zz);
+					}
+				}
+			}
+		}
+	}
+
+	void RefillLightAtPosition (int x, int y, int z)
+	{
+		if (y >= 0 && y < height * chunkSize) {
+			Vector2 loc = GetColumnLocation (x, z);
+			ChunkColumn col;
+			if (loadedWorld.TryGetValue (loc, out col)) {
+				x = mod (x, chunkSize);
+				z = mod (z, chunkSize);
+				col.FloodFillLight (x, y, z, col.lightData [x, y, z], true);
+			}
 		}
 	}
 	
@@ -189,5 +277,5 @@ public class GameWorld : MonoBehaviour {
 				col.chunks [(int)loc.y].modified = true;
 			}
 		}
-    }
+	}
 }

@@ -59,6 +59,11 @@ public class Chunk : MonoBehaviour {
 	{
 		return column.LocalBlock (x, (int)location.y*chunkSize + y, z, def);
 	}
+
+	public byte LocalLight (int x, int y, int z, byte def)
+	{
+		return column.LocalLight (x, (int)location.y*chunkSize + y, z, def);
+	}
 	
 	private void GenerateMesh ()
 	{

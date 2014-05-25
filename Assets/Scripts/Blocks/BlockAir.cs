@@ -6,6 +6,7 @@ public class BlockAir : Block {
 		name = "Air";
 		normalCube = false;
 		collide = false;
+		opaque = false;
 	}
 
 	public override void Render(MeshBuildInfo current, Chunk chunk, int x, int y, int z) {
