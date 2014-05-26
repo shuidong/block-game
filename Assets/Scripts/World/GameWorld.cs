@@ -196,9 +196,6 @@ public class GameWorld : MonoBehaviour
 	{
 		Block[] blocks = ListBlocks.instance.blocks;
 
-		print ("");
-		print ("Set: (" + x + "," + y + "," + z + ") -> " + blocks [block].name);
-
 		//sets the specified block at these coordinates
 		Vector2 loc = GetColumnLocation (x, z);
 		ChunkColumn col;
@@ -213,32 +210,25 @@ public class GameWorld : MonoBehaviour
 			// update lighting
 			if (col.CanSeeSky (cX, y, cZ)) {
 
-				print ("Can see sky");
-
 				// if block is exposed to the sun
 				int yy = y;
 				if (blocks [block].opaque) {
 					// remove light which passed through this point
 					while (yy >= 0 && (y == yy || !blocks[col.blockData[cX, yy, cZ]].opaque)) {
 						col.FloodFillDarkness (cX, yy, cZ, CubeRenderer.MAX_LIGHT + 1);
-						print ("Darken");
 						yy--;
 					}
 				} else {
 					// flood fill sunlight
 					while (yy >= 0 && (!blocks[col.blockData[cX, yy, cZ]].opaque)) {
 						col.FloodFillLight (cX, yy, cZ, CubeRenderer.MAX_LIGHT, true);
-						print ("Enlighten");
 						yy--;
 					}
 				}
 			} else {
 
-				print ("Can't see sky");
-
 				if (blocks [block].opaque) {
 					// remove light which passed through this point
-					print ("Darken");
 					col.FloodFillDarkness (cX, y, cZ, CubeRenderer.MAX_LIGHT + 1);
 				}
 			}
