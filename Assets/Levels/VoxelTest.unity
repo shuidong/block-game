@@ -106,7 +106,7 @@ MonoBehaviour:
   spawnPoint: {x: 0, y: 100, z: 0}
   height: 10
   loadRange: 8
-  unloadRange: 8
+  unloadRange: 10
   loadDynamically: 1
   chunkSize: 15
   columnPrefab: {fileID: 100000, guid: 165093b5866854ea8baa11c3462ef371, type: 2}
