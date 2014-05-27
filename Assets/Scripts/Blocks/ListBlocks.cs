@@ -11,6 +11,7 @@ public class ListBlocks : MonoBehaviour {
 	public const byte STONE = 1;
 	public const byte GRASS = 2;
 	public const byte DIRT = 3;
+	public const byte BEDROCK = 4;
 
 	void Awake() {
 		instance = this;
@@ -21,6 +22,7 @@ public class ListBlocks : MonoBehaviour {
 		blocks[STONE] = new BlockStone ();
 		blocks[GRASS] = new BlockGrass ();
 		blocks[DIRT] = new BlockDirt ();
+		blocks[BEDROCK] = new BlockBedrock ();
 
 		// set IDs
 		for (int i = 0; i < blocks.Length; i++) {

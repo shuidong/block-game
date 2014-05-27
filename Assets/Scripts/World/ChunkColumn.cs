@@ -106,6 +106,7 @@ public class ChunkColumn : MonoBehaviour
 		byte stoneID = ListBlocks.STONE;
 		byte dirtID = ListBlocks.DIRT;
 		byte grassID = ListBlocks.GRASS;
+		byte bedrockID = ListBlocks.BEDROCK;
 		
 		for (int x=startX; x<startX + chunkSize; x++) {
 			for (int z=startZ; z<startZ + chunkSize; z++) {
@@ -116,7 +117,9 @@ public class ChunkColumn : MonoBehaviour
 				int bZ = z - startZ;
 
 				for (int y=0; y < height * chunkSize; y++) {
-					if (y <= stone) {
+					if (y == 0) {
+						blockData [bX, y, bZ] = bedrockID;
+					} else if (y <= stone) {
 						blockData [bX, y, bZ] = stoneID;
 					} else if (y < dirt) {
 						blockData [bX, y, bZ] = dirtID;

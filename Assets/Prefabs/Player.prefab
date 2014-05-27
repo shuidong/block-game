@@ -389,7 +389,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100022}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalPosition: {x: 0, y: -.341666698, z: -.0999999195}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 400026}
@@ -630,7 +630,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10ee92e41fe5f4f3f8e73e5912d6deff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  remoteTesting: 0
+  remoteTesting: 1
   placementSnap: 3
   tapZone:
     serializedVersion: 2
@@ -759,7 +759,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e07321348b89ccd4593ac0fc753ed153, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  remoteTesting: 0
+  remoteTesting: 1
   placementSnap: 1
   tapZone:
     serializedVersion: 2
