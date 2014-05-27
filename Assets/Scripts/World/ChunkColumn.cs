@@ -110,8 +110,8 @@ public class ChunkColumn : MonoBehaviour
 		
 		for (int x=startX; x<startX + chunkSize; x++) {
 			for (int z=startZ; z<startZ + chunkSize; z++) {
-				int stone = 40 + PerlinNoise (x, 0, z, 25, 7, 1.5f);
-				int dirt = stone + PerlinNoise (x, 0, z, 25, 2, 1.0f) + 1;
+				int stone = 35 + PerlinNoise (x, 0, z, 25, 7, 1.5f);
+				int dirt = stone + 5 + PerlinNoise (x, 0, z, 25, 2, 1.0f) + 1;
 
 				int bX = x - startX;
 				int bZ = z - startZ;
