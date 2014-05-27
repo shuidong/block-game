@@ -14,7 +14,7 @@ public class BlockGrass : Block {
 		int rY = y + Random.Range(-1,2);
 		int rZ = z + Random.Range(-1,2);
 
-		if (world.Block (rX, rY, rZ, 0) == ListBlocks.DIRT) {
+		if (world.Block (rX, rY, rZ, ListBlocks.AIR) == ListBlocks.DIRT && world.Block (rX, rY+1, rZ, ListBlocks.AIR) == ListBlocks.AIR) {
 			world.SetBlockAt(rX, rY, rZ, ListBlocks.GRASS);
 		}
 	}
