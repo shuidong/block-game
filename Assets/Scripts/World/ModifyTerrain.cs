@@ -12,6 +12,46 @@ public class ModifyTerrain : MonoBehaviour
 		world = gameObject.GetComponent<GameWorld> ();
 	}
 
+	public byte GetBlockCenter (float range) {
+		byte result = ListBlocks.AIR;
+
+		if (!cameraObject) {
+			cameraObject = GameObject.FindGameObjectWithTag ("MainCamera");
+		}
+		
+		if (cameraObject) {
+			//Returns the block directly in front of the player
+			Ray ray = new Ray (cameraObject.transform.position, cameraObject.transform.forward);
+			RaycastHit hit;
+			
+			if (Physics.Raycast (ray, out hit)) {
+				if (hit.distance < range) {
+					result = GetBlockAt (hit);
+				}
+				Debug.DrawLine (ray.origin, ray.origin + (ray.direction * hit.distance), Color.green, 2);
+			}
+		}
+
+		return result;
+	}
+
+	public byte GetBlockAt (RaycastHit hit)
+	{
+		Vector3 position = hit.point;
+		position += (hit.normal * -smallestBlockThickness);
+		
+		return GetBlockAt (position);
+	}
+
+	public byte GetBlockAt (Vector3 position)
+	{
+		int x = Mathf.RoundToInt (position.x);
+		int y = Mathf.RoundToInt (position.y);
+		int z = Mathf.RoundToInt (position.z);
+
+		return world.Block (x, y, z, ListBlocks.AIR);
+	}
+
 	public void ReplaceBlockCenter (float range, byte block)
 	{
 		if (!cameraObject) {

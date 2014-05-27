@@ -33,6 +33,9 @@ public class PlayerBuild : MonoBehaviour {
 				world.AddBlockCenter(reach,placeID);
 				collisionMaker.UpdateColliders();
 			}
+			if (InputProxy.GetButtonDown("Equip")) {
+				placeID = world.GetBlockCenter(reach);
+			}
 		}
 	}
 }

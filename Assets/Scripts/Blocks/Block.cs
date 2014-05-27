@@ -105,6 +105,10 @@ public abstract class Block
 		return new Bounds (Vector3.zero, Vector3.one);
 	}
 
+	public virtual void BlockTick (GameWorld world, int x, int y, int z)
+	{
+	}
+
 	public virtual void OnLoad (GameWorld world, int x, int y, int z)
 	{
 	}

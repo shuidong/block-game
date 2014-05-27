@@ -26,6 +26,8 @@ public class ChunkColumn : MonoBehaviour
 	public int chunkSize;
 	private Block[] blocks;
 
+	public int tickRate = 4;
+
 	void Start ()
 	{
 		chunks = new Chunk[height];
@@ -47,6 +49,20 @@ public class ChunkColumn : MonoBehaviour
 
 		// build data
 		new Thread (new ThreadStart (GenerateTerrain)).Start ();
+	}
+
+	void FixedUpdate() {
+		int xOffset = (int)(location.x * chunkSize);
+		int zOffset = (int)(location.y * chunkSize);
+		int wHeight = chunkSize * height;
+
+		for (int i = 0; i < tickRate; i++) {
+			int x = Random.Range(0, chunkSize);
+			int y = Random.Range(0, wHeight);
+			int z = Random.Range(0, chunkSize);
+			byte blockID = blockData[x,y,z];
+			blocks[blockID].BlockTick(world, xOffset + x, y, zOffset + z);
+		}
 	}
 
 	public byte LocalBlock (int x, int y, int z, byte def)
