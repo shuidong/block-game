@@ -72,7 +72,7 @@ public class GameWorld : MonoBehaviour
 						if (Mathf.Ceil (dist) < loadRange && !loadedWorld.ContainsKey (loc)) {
 							LoadColumn (x, z);
 							if (player)
-								yield return new WaitForSeconds (.05f);
+								yield return new WaitForSeconds (.08f);
 						}
 					}
 				}

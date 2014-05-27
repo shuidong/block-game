@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Diagnostics;
 
 public class Chunk : MonoBehaviour {
 	// mesh generation
@@ -23,9 +24,11 @@ public class Chunk : MonoBehaviour {
 	// this chunk
 	[HideInInspector]
 	public Vector3 location;
-	public bool needsUpdate;
 	public bool modified;
-	
+	public bool needsUpdate;
+	[HideInInspector]
+	public bool hold;
+
 	void Awake() {
 		mesh = GetComponent<MeshFilter> ().mesh;
 	}
@@ -35,17 +38,17 @@ public class Chunk : MonoBehaviour {
 	}
 
 	void LateUpdate () {
-		if(modified) {
-			GenerateMesh();
-			modified = false;
-			needsUpdate = true;
-		}
+		if (!hold) {
+			if (modified) {
+				GenerateMesh ();
+				modified = false;
+			}
 
-		if(needsUpdate){
-			UpdateMesh();
-			needsUpdate=false;
+			if (needsUpdate) {
+				UpdateMesh ();
+				needsUpdate = false;
+			}
 		}
-
 	}
 
 	void OnDrawGizmosSelected() {
@@ -65,8 +68,11 @@ public class Chunk : MonoBehaviour {
 		return column.LocalLight (x, (int)location.y*chunkSize + y, z, def);
 	}
 	
-	private void GenerateMesh ()
+	public void GenerateMesh ()
 	{
+		Stopwatch watch = new Stopwatch ();
+		watch.Start ();
+
 		Block[] blocks = ListBlocks.instance.blocks;
 
 		for (int x=0; x<chunkSize; x++) {
@@ -81,6 +87,11 @@ public class Chunk : MonoBehaviour {
 		newUVArr = newMesh.uv.ToArray ();
 		newTrianglesArr = newMesh.triangles.ToArray ();
 		newColorsArr = newMesh.colors.ToArray ();
+
+		needsUpdate = true;
+
+		watch.Stop ();
+		print ("time: " + watch.ElapsedMilliseconds);
 	}
 
 	private void UpdateMesh ()

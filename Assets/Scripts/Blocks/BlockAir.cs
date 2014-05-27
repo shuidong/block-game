@@ -4,7 +4,6 @@ using System.Collections;
 public class BlockAir : Block {
 	public BlockAir() {
 		name = "Air";
-		normalCube = false;
 		collide = false;
 		opaque = false;
 	}

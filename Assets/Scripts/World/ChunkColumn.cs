@@ -24,10 +24,12 @@ public class ChunkColumn : MonoBehaviour
 		location;
 	public GameObject chunkPrefab;
 	public int chunkSize;
+	private Block[] blocks;
 
 	void Start ()
 	{
 		chunks = new Chunk[height];
+		blocks = ListBlocks.instance.blocks;
 
 		// instantiate chunks
 		int x = (int)location.x;
@@ -51,7 +53,7 @@ public class ChunkColumn : MonoBehaviour
 	{
 		if (y >= chunkSize * height || y < 0)
 			return def;
-		if (x < 0 || y < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
+		if (x < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
 			return world.Block ((int)location.x * chunkSize + x, y, (int)location.y * chunkSize + z, def);
 		} else {
 			return blockData [x, y, z];
@@ -62,7 +64,7 @@ public class ChunkColumn : MonoBehaviour
 	{
 		if (y >= chunkSize * height || y < 0)
 			return def;
-		if (x < 0 || y < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
+		if (x < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
 			return world.Light ((int)location.x * chunkSize + x, y, (int)location.y * chunkSize + z, def);
 		} else {
 			return lightData [x, y, z];
@@ -85,7 +87,6 @@ public class ChunkColumn : MonoBehaviour
 		int startX = (int)location.x * chunkSize;
 		int startZ = (int)location.y * chunkSize;
 		
-		Block[] blocks = ListBlocks.instance.blocks;
 		byte stoneID = ListBlocks.STONE;
 		byte dirtID = ListBlocks.DIRT;
 		byte grassID = ListBlocks.GRASS;
@@ -122,32 +123,26 @@ public class ChunkColumn : MonoBehaviour
 	public void GenerateSunlight ()
 	{
 		lightData = new byte[chunkSize, chunkSize * height, chunkSize];
-		Block[] blocks = ListBlocks.instance.blocks;
 		byte maxLight = CubeRenderer.MAX_LIGHT;
-		int startX = (int)location.x * chunkSize;
-		int startZ = (int)location.y * chunkSize;
+		int yMax = height * chunkSize - 1;
 
 		// beam sunlight downwards
-		for (int x=startX; x<startX + chunkSize; x++) {
-			for (int z=startZ; z<startZ + chunkSize; z++) {
-				int bX = x - startX;
-				int bZ = z - startZ;
-				for (int y=height * chunkSize - 1; y >= 0; y--) {
-					if (!blocks [blockData [bX, y, bZ]].opaque) {
-						lightData [bX, y, bZ] = maxLight;
-					} else {
+		for (int bX=0; bX<chunkSize; bX++) {
+			for (int bZ=0; bZ<chunkSize; bZ++) {
+				for (int y = yMax; y >= 0; y--) {
+					if (blocks [blockData [bX, y, bZ]].opaque) {
 						break;
+					} else {
+						lightData [bX, y, bZ] = maxLight;
 					}
 				}
 			}
 		}
 
 		// flood fill
-		for (int x=startX; x<startX + chunkSize; x++) {
-			for (int z=startZ; z<startZ + chunkSize; z++) {
-				int bX = x - startX;
-				int bZ = z - startZ;
-				for (int y=height * chunkSize - 1; y >= 0; y--) {
+		for (int bX=0; bX<chunkSize; bX++) {
+			for (int bZ=0; bZ<chunkSize; bZ++) {
+				for (int y = yMax; y >= 0; y--) {
 					if (lightData [bX, y, bZ] > 0) {
 						FloodFillLight (bX, y, bZ, lightData [bX, y, bZ], true);
 					} else {
@@ -160,7 +155,6 @@ public class ChunkColumn : MonoBehaviour
 
 	public bool CanSeeSky (int x, int y, int z)
 	{
-		Block[] blocks = ListBlocks.instance.blocks;
 		for (int i = y+1; i < height * chunkSize; i++) {
 			if (blocks [blockData [x, i, z]].opaque)
 				return false;
@@ -211,26 +205,30 @@ public class ChunkColumn : MonoBehaviour
 			chunks [y / chunkSize].modified = true;
 		}
 	}
-
+	
 	public void FloodFillLight (int x, int y, int z, byte remainingLight, bool source)
 	{
 		// check if flood needs to go to another column
 		ChunkColumn nextCol;
 		if (x < 0) {
-			if (world.loadedWorld.TryGetValue (location + new Vector2 (-1, 0), out nextCol))
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (-1, 0), out nextCol)) {
 				nextCol.FloodFillLight (x + chunkSize, y, z, remainingLight, source);
+			}
 			return;
 		} else if (x >= chunkSize) {
-			if (world.loadedWorld.TryGetValue (location + new Vector2 (1, 0), out nextCol))
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (1, 0), out nextCol)) {
 				nextCol.FloodFillLight (x - chunkSize, y, z, remainingLight, source);
+			}
 			return;
 		} else if (z < 0) {
-			if (world.loadedWorld.TryGetValue (location + new Vector2 (0, -1), out nextCol))
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (0, -1), out nextCol)) {
 				nextCol.FloodFillLight (x, y, z + chunkSize, remainingLight, source);
+			}
 			return;
 		} else if (z >= chunkSize) {
-			if (world.loadedWorld.TryGetValue (location + new Vector2 (0, 1), out nextCol))
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (0, 1), out nextCol)) {
 				nextCol.FloodFillLight (x, y, z - chunkSize, remainingLight, source);
+			}
 			return;
 		}
 
@@ -241,13 +239,13 @@ public class ChunkColumn : MonoBehaviour
         
 		// block at walls
 		chunks [y / chunkSize].modified = true;
-		if (ListBlocks.instance.blocks [blockData [x, y, z]].opaque) {
+		if (blocks [blockData [x, y, z]].opaque) {
 			lightData [x, y, z] = 0;
 			return;
 		}
 
 		//spread here if needed
-		if (remainingLight > 0 && (lightData [x, y, z] < remainingLight || source)) {
+		if (remainingLight > 0 && (source || lightData [x, y, z] < remainingLight)) {
 			lightData [x, y, z] = remainingLight;
 			remainingLight--;
 
@@ -266,7 +264,6 @@ public class ChunkColumn : MonoBehaviour
 
 	void OnDestroy ()
 	{
-		Block[] blocks = ListBlocks.instance.blocks;
 		int startX = (int)location.x * chunkSize;
 		int startZ = (int)location.y * chunkSize;
 		for (int x=startX; x<startX + chunkSize; x++) {
