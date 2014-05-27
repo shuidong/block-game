@@ -8,7 +8,7 @@ public class InputProxy : MonoBehaviour {
 	private Vector3 leftStickPos;
 	private bool leftTweakedLastFrame;
 
-	public CNJoystick rightStick;
+	public CNTouchpad rightStick;
 	private Vector3 rightStickPos;
 	private bool rightTweakedLastFrame;
 	public float rightScale = 0.5f;

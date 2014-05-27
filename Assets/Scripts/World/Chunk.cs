@@ -70,9 +70,6 @@ public class Chunk : MonoBehaviour {
 	
 	public void GenerateMesh ()
 	{
-		Stopwatch watch = new Stopwatch ();
-		watch.Start ();
-
 		Block[] blocks = ListBlocks.instance.blocks;
 
 		for (int x=0; x<chunkSize; x++) {
@@ -89,9 +86,6 @@ public class Chunk : MonoBehaviour {
 		newColorsArr = newMesh.colors.ToArray ();
 
 		needsUpdate = true;
-
-		watch.Stop ();
-		print ("time: " + watch.ElapsedMilliseconds);
 	}
 
 	private void UpdateMesh ()
