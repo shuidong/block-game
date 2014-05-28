@@ -8,6 +8,7 @@ public class PlayerBuild : MonoBehaviour {
 	public byte reach = 4;
 	public GameObject collisionMakerPrefab;
 	private CollisionMaker collisionMaker;
+	public TextMesh pointText;
 
 	void Start() {
 		Screen.lockCursor = true;
@@ -25,6 +26,10 @@ public class PlayerBuild : MonoBehaviour {
 
 	void Update() {
 		if (world) {
+			if(pointText) {
+				pointText.text = ListBlocks.instance.blocks[world.GetBlockCenter(reach)].name;
+			}
+
 			if (InputProxy.GetButtonDown("Dig")) {
 				world.ReplaceBlockCenter(reach, 0);
 				collisionMaker.UpdateColliders();

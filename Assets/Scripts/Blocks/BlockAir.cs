@@ -3,7 +3,7 @@ using System.Collections;
 
 public class BlockAir : Block {
 	public BlockAir() {
-		name = "Air";
+		name = "";
 		collide = false;
 		opaque = false;
 	}
