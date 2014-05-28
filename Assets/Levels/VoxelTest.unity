@@ -110,7 +110,7 @@ MonoBehaviour:
   loadDynamically: 1
   chunkSize: 15
   columnPrefab: {fileID: 100000, guid: 165093b5866854ea8baa11c3462ef371, type: 2}
-  playerPrefab: {fileID: 100022, guid: 066dc71a9736d46399a32260c3799283, type: 2}
+  playerPrefab: {fileID: 100016, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
   player: {fileID: 0}
 --- !u!4 &22076495
 Transform:

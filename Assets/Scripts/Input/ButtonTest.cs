@@ -9,7 +9,7 @@ public class ButtonTest : MonoBehaviour {
 	}
 
 	void CheckButton(string name) {
-		if (Input.GetButtonDown (name)) {
+		if (InputProxy.GetButtonDown (name)) {
 			print(name);
 		}
 	}

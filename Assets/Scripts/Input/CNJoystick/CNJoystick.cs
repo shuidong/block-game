@@ -8,7 +8,8 @@ public enum PlacementSnap
     leftTop,
     leftBottom,
     rightTop,
-    rightBottom
+    rightBottom,
+	none
 }
 /**
  * Joystic move event delegate. 
@@ -81,7 +82,7 @@ public class CNJoystick : MonoBehaviour
     private Transform transformCache;
 
     // Use this for initialization
-    void Awake()
+    void Start()
     {
         CurrentCamera = transform.parent.camera;
 
@@ -251,9 +252,18 @@ public class CNJoystick : MonoBehaviour
                 tapZone.x = screenWidth - tapZone.width;
                 tapZone.y = screenHeight - tapZone.height;
                 break;
+			// We reset the position to where it started
+			case PlacementSnap.none:
+				snapPosition.x = transform.position.x;
+				snapPosition.y = transform.position.y;
+				
+				// Tap zone change so we can utilize Rect's .Contains() method
+				tapZone.x = screenWidth - tapZone.width;
+				tapZone.y = screenHeight - tapZone.height;
+				break;
         }
-        transformCache.localPosition = snapPosition;
 
+        transformCache.localPosition = snapPosition;
         SpriteRenderer joystickBaseSpriteRenderer = joystickBase.renderer as SpriteRenderer;
         joystickBaseRadius = joystickBaseSpriteRenderer.bounds.extents.x;
 

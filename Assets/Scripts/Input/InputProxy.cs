@@ -16,6 +16,8 @@ public class InputProxy : MonoBehaviour {
 	public JumpSensor solidJumpSensor;
 	public JumpSensor notSolidJumpSensor;
 
+	public NamedButton[] buttons;
+
 	void Awake() {
 		instance = this;
 	}
@@ -29,7 +31,7 @@ public class InputProxy : MonoBehaviour {
 		if (rightStick) {
 			rightStick.JoystickMovedEvent += RightStickMoved;
 			rightStick.FingerLiftedEvent += RightStickReleased;
-        }
+		}
 	}
 
 	void Update() {
@@ -66,7 +68,9 @@ public class InputProxy : MonoBehaviour {
 		rightTweakedLastFrame = true;
     }
 
+	// handles horizontal, vertical, and mouse x/y
 	public static float GetAxis(string name) {
+		// on screen joystick
 		if (instance.leftStick && instance.leftStick.gameObject.activeInHierarchy) {
 			if (name == "Horizontal")
 				return instance.leftStickPos.x;
@@ -74,6 +78,7 @@ public class InputProxy : MonoBehaviour {
 				return instance.leftStickPos.y;
         }
 
+		// on screen touchpad
 		if (instance.rightStick && instance.rightStick.gameObject.activeInHierarchy) {
 			if (name == "Mouse X")
 				return instance.rightStickPos.x;
@@ -81,25 +86,64 @@ public class InputProxy : MonoBehaviour {
 				return instance.rightStickPos.y;
         }
 
+		// normal input
 		return Input.GetAxis(name);
 	}
 
 	public static bool GetButtonDown(string name) {
-		// temporarily cancel these input in mobile mode
-		if (instance.leftStick && instance.leftStick.gameObject.activeInHierarchy) {
-			if (name == "Dig" || name == "Use" || name == "Equip")
-				return false;
+		// on screen buttons
+		bool found = false;
+		foreach (NamedButton b in instance.buttons) {
+			if (b.name == name && b.button) {
+				found = true;
+				if (b.button.justPressed)
+					return true;
+			}
 		}
 		
-		return Input.GetButtonDown(name);
+		// normal input
+		return !found && Input.GetButtonDown(name);
+	}
+
+	public static bool GetButtonUp(string name) {
+		// on screen buttons
+		bool found = false;
+		foreach (NamedButton b in instance.buttons) {
+			if (b.name == name && b.button) {
+				found = true;
+				if (b.button.justReleased)
+					return true;
+			}
+		}
+		
+		// normal input
+		return !found && Input.GetButtonDown(name);
 	}
 
 	public static bool GetButton(string name) {
+		// autojump
 		if (instance.solidJumpSensor && instance.notSolidJumpSensor && name == "Jump" && GetAxis("Vertical") > 0) {
 			if (instance.solidJumpSensor.triggered && !instance.notSolidJumpSensor.triggered)
 				return true;
 		}
 
-		return Input.GetButton(name);
+		// on screen buttons
+		bool found = false;
+		foreach (NamedButton b in instance.buttons) {
+			if (b.name == name && b.button) {
+				found = true;
+				if (b.button.pressed)
+					return true;
+			}
+		}
+
+		// normal input
+		return !found && Input.GetButton(name);
 	}
+}
+
+[System.Serializable]
+public class NamedButton {
+	public OnScreenButton button;
+	public string name;
 }
