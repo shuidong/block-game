@@ -867,7 +867,7 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: .600000024, y: .100000001, z: .300000012}
+  m_Size: {x: .100000001, y: .100000001, z: .100000001}
   m_Center: {x: 0, y: .5, z: -.0500000007}
 --- !u!81 &8100000
 AudioListener:
@@ -1404,7 +1404,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   world: {fileID: 0}
-  placeID: 1
+  placeBlock:
+    block: 1
+    meta: 0
   reach: 5
   collisionMakerPrefab: {fileID: 100000, guid: 0e086d6d9a5774c76a17c8d3d0f409ee, type: 2}
   pointText: {fileID: 10200000}

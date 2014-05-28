@@ -16,6 +16,7 @@ public class GameWorld : MonoBehaviour
 	public int chunkSize = 15;
 	public GameObject columnPrefab;
 	public GameObject playerPrefab;
+	public LoadingIndicator loadingScreen;
 
 	// currently loaded state
 	[HideInInspector]
@@ -39,6 +40,7 @@ public class GameWorld : MonoBehaviour
 
 	IEnumerator LoadChunksCoroutine ()
 	{
+		yield return null;
 		while (true) {
 			Vector3 playerPos = spawnPoint;
 			if (player)
@@ -73,6 +75,8 @@ public class GameWorld : MonoBehaviour
 							LoadColumn (x, z);
 							if (player)
 								yield return new WaitForSeconds (.08f);
+							else
+								yield return null;
 						}
 					}
 				}
@@ -87,6 +91,8 @@ public class GameWorld : MonoBehaviour
 					yield return null;
 				player = Instantiate (playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
 				player.GetComponent<PlayerBuild> ().world = gameObject.GetComponent<ModifyTerrain> ();
+				if(loadingScreen)
+					loadingScreen.Done();
 			}
 		}
 	}
