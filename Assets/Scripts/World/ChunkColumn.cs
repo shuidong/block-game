@@ -5,27 +5,29 @@ using System.Threading;
 public class ChunkColumn : MonoBehaviour
 {
 	[HideInInspector]
-	public GameWorld
-		world;
+	public GameWorld world;
+
 	[HideInInspector]
-	public byte[,,]
-		blockData;
+	public byte[,,] blockData;
+
 	[HideInInspector]
-	public byte[,,]
-		lightData;
+	public byte[,,] lightData;
+
 	[HideInInspector]
-	public Chunk[]
-		chunks;
+	public byte[,,] metaData;
+
 	[HideInInspector]
-	public int
-		height;
+	public Chunk[] chunks;
+
 	[HideInInspector]
-	public Vector2
-		location;
+	public int height;
+
+	[HideInInspector]
+	public Vector2 location;
+
 	public GameObject chunkPrefab;
 	public int chunkSize;
 	private Block[] blocks;
-
 	public int tickRate = 4;
 
 	void Start ()
@@ -51,28 +53,29 @@ public class ChunkColumn : MonoBehaviour
 		new Thread (new ThreadStart (GenerateTerrain)).Start ();
 	}
 
-	void FixedUpdate() {
+	void FixedUpdate ()
+	{
 		int xOffset = (int)(location.x * chunkSize);
 		int zOffset = (int)(location.y * chunkSize);
 		int wHeight = chunkSize * height;
 
 		for (int i = 0; i < tickRate; i++) {
-			int x = Random.Range(0, chunkSize);
-			int y = Random.Range(0, wHeight);
-			int z = Random.Range(0, chunkSize);
-			byte blockID = blockData[x,y,z];
-			blocks[blockID].BlockTick(world, xOffset + x, y, zOffset + z);
+			int x = Random.Range (0, chunkSize);
+			int y = Random.Range (0, wHeight);
+			int z = Random.Range (0, chunkSize);
+			byte blockID = blockData [x, y, z];
+			blocks [blockID].BlockTick (world, xOffset + x, y, zOffset + z, metaData[x, y, z]);
 		}
 	}
 
-	public byte LocalBlock (int x, int y, int z, byte def)
+	public BlockMeta LocalBlock (int x, int y, int z, byte def)
 	{
 		if (y >= chunkSize * height || y < 0)
-			return def;
+			return new BlockMeta (def, 0);
 		if (x < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
 			return world.Block ((int)location.x * chunkSize + x, y, (int)location.y * chunkSize + z, def);
 		} else {
-			return blockData [x, y, z];
+			return new BlockMeta (blockData [x, y, z], metaData [x, y, z]);
 		}
 	}
 
@@ -87,9 +90,9 @@ public class ChunkColumn : MonoBehaviour
 		}
 	}
 
-	public byte LocalBlock (int x, int y, int z)
+	public BlockMeta LocalBlock (int x, int y, int z)
 	{
-		return blockData [x, y, z];
+		return new BlockMeta (blockData [x, y, z], metaData [x, y, z]);
 	}
 
 	public byte LocalLight (int x, int y, int z)
@@ -110,8 +113,12 @@ public class ChunkColumn : MonoBehaviour
 		
 		for (int x=startX; x<startX + chunkSize; x++) {
 			for (int z=startZ; z<startZ + chunkSize; z++) {
-				int stone = 35 + PerlinNoise (x, 0, z, 25, 7, 1.5f);
-				int dirt = stone + 5 + PerlinNoise (x, 0, z, 25, 2, 1.0f) + 1;
+				int stone0 = 02 + PerlinNoise (x, 02, z, 25, 7, 1.5f);
+				int stone1 = 07 + PerlinNoise (x, 07, z, 25, 7, 1.5f);
+				int stone2 = 15 + PerlinNoise (x, 15, z, 25, 7, 1.5f);
+				int stone3 = 25 + PerlinNoise (x, 25, z, 25, 7, 1.5f);
+				int stone4 = 35 + PerlinNoise (x, 35, z, 25, 7, 1.5f);
+				int dirt   = 06 + PerlinNoise (x, 06 + stone4, z, 25, 2, 1.0f) + stone4;
 
 				int bX = x - startX;
 				int bZ = z - startZ;
@@ -119,15 +126,28 @@ public class ChunkColumn : MonoBehaviour
 				for (int y=0; y < height * chunkSize; y++) {
 					if (y == 0) {
 						blockData [bX, y, bZ] = bedrockID;
-					} else if (y <= stone) {
+					} else if (y <= stone0) {
 						blockData [bX, y, bZ] = stoneID;
+						metaData [bX, y, bZ] = 4;
+					} else if (y <= stone1) {
+						blockData [bX, y, bZ] = stoneID;
+						metaData [bX, y, bZ] = 3;
+					} else if (y <= stone2) {
+						blockData [bX, y, bZ] = stoneID;
+						metaData [bX, y, bZ] = 2;
+					} else if (y <= stone3) {
+						blockData [bX, y, bZ] = stoneID;
+						metaData [bX, y, bZ] = 1;
+					} else if (y <= stone4) {
+						blockData [bX, y, bZ] = stoneID;
+						metaData [bX, y, bZ] = 0;
 					} else if (y < dirt) {
 						blockData [bX, y, bZ] = dirtID;
 					} else if (y == dirt) {
 						blockData [bX, y, bZ] = grassID;
 					}
 
-					blocks [blockData [bX, y, bZ]].OnLoad (world, x, y, z);
+					blocks [blockData [bX, y, bZ]].OnLoad (world, x, y, z, metaData [bX, y, bZ]);
 				}
 			}
 		}
@@ -141,7 +161,6 @@ public class ChunkColumn : MonoBehaviour
 
 	public void GenerateSunlight ()
 	{
-		lightData = new byte[chunkSize, chunkSize * height, chunkSize];
 		byte maxLight = CubeRenderer.MAX_LIGHT;
 		int yMax = height * chunkSize - 1;
 
@@ -290,7 +309,7 @@ public class ChunkColumn : MonoBehaviour
 				for (int y=0; y < height * chunkSize; y++) {
 					int bX = x - startX;
 					int bZ = z - startZ;
-					blocks [blockData [bX, y, bZ]].OnUnload (world, x, y, z);
+					blocks [blockData [bX, y, bZ]].OnUnload (world, x, y, z, metaData [bX, y, bZ]);
 				}
 			}
 		}

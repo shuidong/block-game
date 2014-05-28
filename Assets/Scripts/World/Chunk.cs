@@ -58,7 +58,7 @@ public class Chunk : MonoBehaviour {
 		Gizmos.DrawWireCube (center, size);
 	}
 
-	public byte LocalBlock (int x, int y, int z, byte def)
+	public BlockMeta LocalBlock (int x, int y, int z, byte def)
 	{
 		return column.LocalBlock (x, (int)location.y*chunkSize + y, z, def);
 	}
@@ -75,7 +75,8 @@ public class Chunk : MonoBehaviour {
 		for (int x=0; x<chunkSize; x++) {
 			for (int y=0; y<chunkSize; y++) {
 				for (int z=0; z<chunkSize; z++) {
-					blocks[LocalBlock (x, y, z, 0)].Render(newMesh, this, x, y, z);
+					BlockMeta b = LocalBlock (x, y, z, 0);
+					blocks[b.block].Render(newMesh, this, x, y, z, b.meta);
 				}
 			}
 		}

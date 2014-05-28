@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerBuild : MonoBehaviour {
 
 	public ModifyTerrain world;
-	public byte placeID = 1;
+	public BlockMeta placeBlock = new BlockMeta(1, 0);
 	public byte reach = 4;
 	public GameObject collisionMakerPrefab;
 	private CollisionMaker collisionMaker;
@@ -27,21 +27,21 @@ public class PlayerBuild : MonoBehaviour {
 	void Update() {
 		if (world) {
 			if(pointText) {
-				pointText.text = ListBlocks.instance.blocks[world.GetBlockCenter(reach)].name;
+				pointText.text = ListBlocks.instance.blocks[world.GetBlockCenter(reach).block].name;
 			}
 
 			if (InputProxy.GetButtonDown("Dig")) {
-				world.ReplaceBlockCenter(reach, 0);
+				world.ReplaceBlockCenter(reach, 0, 0);
 				collisionMaker.UpdateColliders();
 			}
 			if (InputProxy.GetButtonDown("Use")) {
-				world.AddBlockCenter(reach,placeID);
+				world.AddBlockCenter(reach, placeBlock.block, placeBlock.meta);
 				collisionMaker.UpdateColliders();
 			}
 			if (InputProxy.GetButtonDown("Equip")) {
-				byte id = world.GetBlockCenter(reach);
-				if (id != ListBlocks.AIR) {
-					placeID = id;
+				BlockMeta id = world.GetBlockCenter(reach);
+				if (id.block != ListBlocks.AIR) {
+					placeBlock = id;
 				}
 			}
 		}

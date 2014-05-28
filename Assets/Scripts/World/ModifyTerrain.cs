@@ -12,8 +12,10 @@ public class ModifyTerrain : MonoBehaviour
 		world = gameObject.GetComponent<GameWorld> ();
 	}
 
-	public byte GetBlockCenter (float range) {
-		byte result = ListBlocks.AIR;
+	// GET BLOCKS
+
+	public BlockMeta GetBlockCenter (float range) {
+		BlockMeta result = new BlockMeta (ListBlocks.AIR, 0);
 
 		if (!cameraObject) {
 			cameraObject = GameObject.FindGameObjectWithTag ("MainCamera");
@@ -28,14 +30,13 @@ public class ModifyTerrain : MonoBehaviour
 				if (hit.distance < range) {
 					result = GetBlockAt (hit);
 				}
-				Debug.DrawLine (ray.origin, ray.origin + (ray.direction * hit.distance), Color.green, 2);
 			}
 		}
 
 		return result;
 	}
 
-	public byte GetBlockAt (RaycastHit hit)
+	public BlockMeta GetBlockAt (RaycastHit hit)
 	{
 		Vector3 position = hit.point;
 		position += (hit.normal * -smallestBlockThickness);
@@ -43,7 +44,7 @@ public class ModifyTerrain : MonoBehaviour
 		return GetBlockAt (position);
 	}
 
-	public byte GetBlockAt (Vector3 position)
+	public BlockMeta GetBlockAt (Vector3 position)
 	{
 		int x = Mathf.RoundToInt (position.x);
 		int y = Mathf.RoundToInt (position.y);
@@ -52,7 +53,9 @@ public class ModifyTerrain : MonoBehaviour
 		return world.Block (x, y, z, ListBlocks.AIR);
 	}
 
-	public void ReplaceBlockCenter (float range, byte block)
+	// SET BLOCKS
+
+	public void ReplaceBlockCenter (float range, byte block, byte meta)
 	{
 		if (!cameraObject) {
 			cameraObject = GameObject.FindGameObjectWithTag ("MainCamera");
@@ -66,14 +69,13 @@ public class ModifyTerrain : MonoBehaviour
 			if (Physics.Raycast (ray, out hit)) {
 			
 				if (hit.distance < range) {
-					ReplaceBlockAt (hit, block);
+					ReplaceBlockAt (hit, block, meta);
 				}
-				Debug.DrawLine (ray.origin, ray.origin + (ray.direction * hit.distance), Color.green, 2);
 			}
 		}
 	}
 	
-	public void AddBlockCenter (float range, byte block)
+	public void AddBlockCenter (float range, byte block, byte meta)
 	{
 		if (!cameraObject) {
 			cameraObject = GameObject.FindGameObjectWithTag ("MainCamera");
@@ -87,14 +89,13 @@ public class ModifyTerrain : MonoBehaviour
 			if (Physics.Raycast (ray, out hit)) {
 			
 				if (hit.distance < range) {
-					AddBlockAt (hit, block);
+					AddBlockAt (hit, block, meta);
 				}
-				Debug.DrawLine (ray.origin, ray.origin + (ray.direction * hit.distance), Color.green, 2);
 			}
 		}
 	}
 	
-	public void ReplaceBlockCursor (byte block)
+	public void ReplaceBlockCursor (byte block, byte meta)
 	{
 		//Replaces the block specified where the mouse cursor is pointing
 		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
@@ -102,15 +103,13 @@ public class ModifyTerrain : MonoBehaviour
 		
 		if (Physics.Raycast (ray, out hit)) {
 			
-			ReplaceBlockAt (hit, block);
-			Debug.DrawLine (ray.origin, ray.origin + (ray.direction * hit.distance),
-			               Color.green, 2);
+			ReplaceBlockAt (hit, block, meta);
 			
 		}
 		
 	}
 	
-	public void AddBlockCursor (byte block)
+	public void AddBlockCursor (byte block, byte meta)
 	{
 		//Adds the block specified where the mouse cursor is pointing
 		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
@@ -118,33 +117,31 @@ public class ModifyTerrain : MonoBehaviour
 
 		if (Physics.Raycast (ray, out hit)) {
 			
-			AddBlockAt (hit, block);
-			Debug.DrawLine (ray.origin, ray.origin + (ray.direction * hit.distance),
-			               Color.green, 2);
+			AddBlockAt (hit, block, meta);
 		}
 		
 	}
 	
-	public void ReplaceBlockAt (RaycastHit hit, byte block)
+	public void ReplaceBlockAt (RaycastHit hit, byte block, byte meta)
 	{
 		//removes a block at these impact coordinates, you can raycast against the terrain and call this with the hit.point
 		Vector3 position = hit.point;
 		position += (hit.normal * -smallestBlockThickness);
 		
-		SetBlockAt (position, block);
+		SetBlockAt (position, block, meta);
 	}
 	
-	public void AddBlockAt (RaycastHit hit, byte block)
+	public void AddBlockAt (RaycastHit hit, byte block, byte meta)
 	{
 		//adds the specified block at these impact coordinates, you can raycast against the terrain and call this with the hit.point
 		Vector3 position = hit.point;
 		position += (hit.normal * (1-smallestBlockThickness));
 		
-		SetBlockAt (position, block);
+		SetBlockAt (position, block, meta);
 		
 	}
 	
-	public void SetBlockAt (Vector3 position, byte newBlock)
+	public void SetBlockAt (Vector3 position, byte newBlock, byte meta)
 	{
 		//sets the specified block at these coordinates
 		
@@ -154,11 +151,11 @@ public class ModifyTerrain : MonoBehaviour
 
 		Block[] blocks = ListBlocks.instance.blocks;
 
-		byte currentBlock = world.Block (x, y, z, ListBlocks.AIR);
-		if (!ListBlocks.instance.blocks [currentBlock].indestructable) {
-			blocks [currentBlock].OnBreak (world, x, y, z);
-			world.SetBlockAt (x, y, z, newBlock);
-			blocks [newBlock].OnBuild (world, x, y, z);
+		BlockMeta currentBlock = world.Block (x, y, z, ListBlocks.AIR);
+		if (!ListBlocks.instance.blocks [currentBlock.block].indestructable) {
+			blocks [currentBlock.block].OnBreak (world, x, y, z, currentBlock.meta);
+			world.SetBlockAt (x, y, z, newBlock, meta);
+			blocks [newBlock].OnBuild (world, x, y, z, meta);
 		}
 	}
 }

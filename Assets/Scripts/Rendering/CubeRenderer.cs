@@ -28,7 +28,7 @@ public class CubeRenderer
 		return (a + c) < (b + d);
 	}
 
-	public static void CubeTop (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth)
+	public static void CubeTop (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth, Color color)
 	{
 		Vector3 pos = new Vector3 (x, y, z);
 		current.vertices.Add (pos + Vertex.tNW (center, size));
@@ -61,11 +61,11 @@ public class CubeRenderer
 
 		// finish up the face
 		byte textureID = tex.texTop;
-		PushFace (current, TextureLocation (textureID), corners, flip);
+		PushFace (current, TextureLocation (textureID), corners, flip, color);
 
 	}
 	
-	public static void CubeNorth (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth)
+	public static void CubeNorth (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth, Color color)
 	{
 		Vector3 pos = new Vector3 (x, y, z);
 		current.vertices.Add (pos + Vertex.bNE (center, size));
@@ -97,10 +97,10 @@ public class CubeRenderer
 		bool flip = !smooth ? false : FlipTriangles (corners [2], corners [1], corners [0], corners [3]);
 
 		byte textureID = tex.texNorth;
-		PushFace (current, TextureLocation (textureID), corners, flip);
+		PushFace (current, TextureLocation (textureID), corners, flip, color);
 	}
 	
-	public static void CubeEast (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth)
+	public static void CubeEast (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth, Color color)
 	{
 		Vector3 pos = new Vector3 (x, y, z);
 		current.vertices.Add (pos + Vertex.bSE (center, size));
@@ -132,10 +132,10 @@ public class CubeRenderer
 		bool flip = !smooth ? false : FlipTriangles (corners [3], corners [2], corners [1], corners [0]);
 
 		byte textureID = tex.texEast;
-		PushFace (current, TextureLocation (textureID), corners, flip);
+		PushFace (current, TextureLocation (textureID), corners, flip, color);
 	}
 	
-	public static void CubeSouth (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth)
+	public static void CubeSouth (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth, Color color)
 	{
 		Vector3 pos = new Vector3 (x, y, z);
 		current.vertices.Add (pos + Vertex.bSW (center, size));
@@ -167,10 +167,10 @@ public class CubeRenderer
 		bool flip = !smooth ? false : FlipTriangles (corners [1], corners [2], corners [3], corners [0]);
 
 		byte textureID = tex.texSouth;
-		PushFace (current, TextureLocation (textureID), corners, flip);
+		PushFace (current, TextureLocation (textureID), corners, flip, color);
 	}
 	
-	public static void CubeWest (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth)
+	public static void CubeWest (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth, Color color)
 	{
 		Vector3 pos = new Vector3 (x, y, z);
 		current.vertices.Add (pos + Vertex.bNW (center, size));
@@ -202,10 +202,10 @@ public class CubeRenderer
 		bool flip = !smooth ? false : FlipTriangles (corners [0], corners [1], corners [2], corners [3]);
 
 		byte textureID = tex.texWest;
-		PushFace (current, TextureLocation (textureID), corners, flip);
+		PushFace (current, TextureLocation (textureID), corners, flip, color);
 	}
 	
-	public static void CubeBottom (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth)
+	public static void CubeBottom (MeshBuildInfo current, int x, int y, int z, TextureLayout tex, Vector3 center, Vector3 size, byte[] l, bool smooth, Color color)
 	{
 		Vector3 pos = new Vector3 (x, y, z);
 		current.vertices.Add (pos + Vertex.bSW (center, size));
@@ -237,14 +237,14 @@ public class CubeRenderer
 		bool flip = !smooth ? false : FlipTriangles (corners [3], corners [2], corners [1], corners [0]);
 
 		byte textureID = tex.texBottom;
-		PushFace (current, TextureLocation (textureID), corners, flip);
+		PushFace (current, TextureLocation (textureID), corners, flip, color);
 	}
 
-	private static void PushFace (MeshBuildInfo current, Vector2 texturePos, byte[] light, bool flip)
+	private static void PushFace (MeshBuildInfo current, Vector2 texturePos, byte[] light, bool flip, Color color)
 	{
 		// apply light to verts
 		for (int i = 0; i < light.Length; i++) {
-			current.colors.Add (lightColors [light [i]]);
+			current.colors.Add (color * lightColors [light [i]]);
 		}
 
 		// create triangles

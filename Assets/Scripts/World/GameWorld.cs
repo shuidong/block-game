@@ -118,7 +118,7 @@ public class GameWorld : MonoBehaviour
 		return ((k %= n) < 0) ? k + n : k;
 	}
 
-	public byte Block (Vector3 pos, byte def)
+	public BlockMeta Block (Vector3 pos, byte def)
 	{
 		int x = (int)pos.x;
 		int y = (int)pos.y;
@@ -126,7 +126,7 @@ public class GameWorld : MonoBehaviour
 		return Block (x, y, z, def);
 	}
 
-	public byte Block (int x, int y, int z, byte def)
+	public BlockMeta Block (int x, int y, int z, byte def)
 	{
 		Vector2 loc = GetColumnLocation (x, z);
 		ChunkColumn column;
@@ -137,7 +137,7 @@ public class GameWorld : MonoBehaviour
 		}
 		
 		// else return def
-		return def;
+		return new BlockMeta (def, 0);
 	}
 
 	public byte Light (int x, int y, int z, byte def)
@@ -166,6 +166,7 @@ public class GameWorld : MonoBehaviour
 			column.location = loc;
 			column.chunkSize = chunkSize;
 			column.blockData = new byte[chunkSize, height * chunkSize, chunkSize];
+			column.metaData = new byte[chunkSize, height * chunkSize, chunkSize];
 			column.lightData = new byte[chunkSize, height * chunkSize, chunkSize];
 			loadedWorld.Add (loc, column);
 		}
@@ -192,7 +193,7 @@ public class GameWorld : MonoBehaviour
 		}
 	}
 
-	public void SetBlockAt (int x, int y, int z, byte block)
+	public void SetBlockAt (int x, int y, int z, byte block, byte meta)
 	{
 		Block[] blocks = ListBlocks.instance.blocks;
 
@@ -206,6 +207,7 @@ public class GameWorld : MonoBehaviour
 
 			// set block
 			col.blockData [cX, y, cZ] = block;
+			col.metaData [cX, y, cZ] = meta;
 
 			// update lighting
 			if (col.CanSeeSky (cX, y, cZ)) {

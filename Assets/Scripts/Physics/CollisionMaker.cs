@@ -44,7 +44,7 @@ public class CollisionMaker : MonoBehaviour {
 			for (int y = 0; y < points.GetLength(1); y++) {
 				for (int z = 0; z < points.GetLength(2); z++) {
 					Vector3 boxOffset = origin + new Vector3(x, y, z);
-					byte blockID = world.Block(boxOffset + myPos, ListBlocks.STONE);
+					byte blockID = world.Block(boxOffset + myPos, ListBlocks.STONE).block;
 					BoxCollider boxCollider = points[x,y,z];
 					Block block = ListBlocks.instance.blocks[blockID];
 					if(block.collide) {
