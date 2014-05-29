@@ -94,6 +94,7 @@ public class GameWorld : MonoBehaviour
 	IEnumerator LoadChunksCoroutine ()
 	{
 		yield return null;
+		loadingScreen.autoText = false;
 		while (true) {
 			Vector3 playerPos = spawnPoint;
 			if (player)
@@ -125,11 +126,14 @@ public class GameWorld : MonoBehaviour
 
 						float dist = Vector2.Distance (playerLoc, loc);
 						if (Mathf.Ceil (dist) < loadRange && !loadedWorld.ContainsKey (loc)) {
+							if(loadingScreen)
+								loadingScreen.SetText("GENERATE: ("  + x + ", " + z + ")");
 							LoadColumn (x, z);
-							if (player)
+							if (player) {
 								yield return new WaitForSeconds (.08f);
-							else
+							} else {
 								yield return null;
+							}
 						}
 					}
 				}
@@ -140,10 +144,16 @@ public class GameWorld : MonoBehaviour
 
 			if (!player) {
 				// if the player hasn't been spawned, spawn it after 20 frames
+				loadingScreen.SetText("");
 				for (int i = 0; i < 20; i++)
 					yield return null;
-				while (chunkUpdateQueue.Count > 0)
-					yield return null;
+
+				// wait for chunks to render
+				while (chunkUpdateQueue.Count > 0) {
+					loadingScreen.SetText("RENDER: (" + chunkUpdateQueue.Count + " left)");
+					yield return new WaitForSeconds(0.5f);
+				}
+
 				player = Instantiate (playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
 				player.GetComponent<PlayerBuild> ().world = gameObject.GetComponent<ModifyTerrain> ();
 				if(loadingScreen)

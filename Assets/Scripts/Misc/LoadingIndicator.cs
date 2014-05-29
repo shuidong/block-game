@@ -7,6 +7,7 @@ public class LoadingIndicator : MonoBehaviour {
 	public string[] strings;
 	public float time = 1f;
 	public bool random = false;
+	public bool autoText = true;
 
 	int current;
 
@@ -20,8 +21,12 @@ public class LoadingIndicator : MonoBehaviour {
 
 	IEnumerator SwitchIndicator() {
 		while (true) {
-			gameObject.GetComponent<TextMesh>().text = strings[current];
-			camera.Render();
+			if(!autoText) {
+				yield return null;
+				continue;
+			}
+
+			SetText(strings[current]);
 			yield return new WaitForSeconds(time);
 			if (random)
 				current = Random.Range (0, strings.Length);
@@ -34,5 +39,10 @@ public class LoadingIndicator : MonoBehaviour {
 	public void Done() {
 		StopCoroutine (SwitchIndicator());
 		Destroy (gameObject);
+	}
+
+	public void SetText(string t) {
+		gameObject.GetComponent<TextMesh>().text = t;
+		camera.Render();
 	}
 }

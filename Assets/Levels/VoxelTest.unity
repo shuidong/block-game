@@ -211,7 +211,7 @@ TextMesh:
   m_Anchor: 4
   m_Alignment: 1
   m_TabSize: 4
-  m_FontSize: 119
+  m_FontSize: 50
   m_FontStyle: 0
   m_RichText: 1
   m_Font: {fileID: 12800000, guid: 9cd88a9d0e04e408faf247cb8028ad09, type: 3}
@@ -301,3 +301,4 @@ MonoBehaviour:
   - Loading...
   time: 1
   random: 0
+  autoText: 1
