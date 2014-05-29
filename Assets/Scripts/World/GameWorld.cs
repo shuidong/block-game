@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 
 public class GameWorld : MonoBehaviour
 {
@@ -20,17 +21,69 @@ public class GameWorld : MonoBehaviour
 
 	// currently loaded state
 	[HideInInspector]
-	public GameObject
-		player;
+	public GameObject player;
 	[HideInInspector]
-	public Dictionary<Vector2, ChunkColumn>
-		loadedWorld;
+	public Dictionary<Vector2, ChunkColumn> loadedWorld;
+
+	// chunk rendering thread stuff
+	public List<Chunk> chunkUpdateQueue = new List<Chunk>();
+	private bool[] chunkUpdaterIdle;
+	private Chunk[] currentlyWorkingChunk;
+	private int numCPU;
 
 	void Start ()
 	{
+		numCPU = SystemInfo.processorCount;
+		chunkUpdaterIdle = new bool[numCPU];
+		currentlyWorkingChunk = new Chunk[numCPU];
+		for (int i = 0; i < numCPU; i++)
+			chunkUpdaterIdle[i] = true;
+
 		transform.position = Vector3.zero;
 		loadedWorld = new Dictionary<Vector2, ChunkColumn> ();
 		LoadChunks ();
+	}
+
+	void Update() {
+		Vector3 playerPos = player == null ? Vector3.zero : player.transform.position;
+		Vector3 playerChunk = GetChunkLocation ((int)playerPos.x, (int)playerPos.y, (int)playerPos.z);
+
+		for (int i = 0; i < numCPU; i++) {
+			if (chunkUpdaterIdle[i] && chunkUpdateQueue.Count > 0) {
+				// find closest chunk
+				float bestDist = float.MaxValue;
+				int bestIndex = -1;
+				for (int j = 0; j < chunkUpdateQueue.Count; j++) {
+					float dist = Vector3.Distance(playerChunk, chunkUpdateQueue[j].location);
+					if(dist < bestDist) {
+						bestIndex = j;
+						bestDist = dist;
+					}
+				}
+
+				// update the chunk
+				Chunk c = chunkUpdateQueue[bestIndex];
+				if(!c.needsUpdate) {
+					currentlyWorkingChunk[i] = c;
+					chunkUpdateQueue.RemoveAt (bestIndex);
+
+					chunkUpdaterIdle[i] = false;
+					Thread t = new Thread (new ParameterizedThreadStart (RenderChunk));
+					t.Priority = System.Threading.ThreadPriority.Highest;
+					t.Start (i);
+				}
+
+			}
+		}
+	}
+
+	void RenderChunk(System.Object o) {
+		int i = (int)o;
+		lock (currentlyWorkingChunk[i]) {
+			currentlyWorkingChunk [i].GenerateMesh ();
+		}
+		chunkUpdaterIdle [i] = true;
+		currentlyWorkingChunk [i] = null;
 	}
 
 	public void LoadChunks ()
@@ -88,6 +141,8 @@ public class GameWorld : MonoBehaviour
 			if (!player) {
 				// if the player hasn't been spawned, spawn it after 20 frames
 				for (int i = 0; i < 20; i++)
+					yield return null;
+				while (chunkUpdateQueue.Count > 0)
 					yield return null;
 				player = Instantiate (playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
 				player.GetComponent<PlayerBuild> ().world = gameObject.GetComponent<ModifyTerrain> ();

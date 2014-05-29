@@ -113,6 +113,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 100042, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
   loadingScreen: {fileID: 1534277426}
   player: {fileID: 0}
+  chunkUpdateQueue: []
 --- !u!4 &22076495
 Transform:
   m_ObjectHideFlags: 0

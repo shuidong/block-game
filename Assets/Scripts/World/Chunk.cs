@@ -40,7 +40,9 @@ public class Chunk : MonoBehaviour {
 	void LateUpdate () {
 		if (!hold) {
 			if (modified) {
-				GenerateMesh ();
+				//GenerateMesh ();
+				if(!column.world.chunkUpdateQueue.Contains(this))
+					column.world.chunkUpdateQueue.Add(this);
 				modified = false;
 			}
 
@@ -91,13 +93,22 @@ public class Chunk : MonoBehaviour {
 
 	private void UpdateMesh ()
 	{
-		mesh.Clear ();
-		mesh.vertices = newVerticesArr;
-		mesh.uv = newUVArr;
-		mesh.triangles = newTrianglesArr;
-		mesh.colors = newColorsArr;
-		mesh.Optimize ();
-		mesh.RecalculateNormals ();
+		int numVerts = mesh.vertices.Length;
+		int numUV = mesh.uv.Length;
+		int numColors = mesh.colors.Length;
+
+		if (numVerts == numUV && numVerts == numColors) {
+			mesh.Clear ();
+			mesh.vertices = newVerticesArr;
+			mesh.uv = newUVArr;
+			mesh.triangles = newTrianglesArr;
+			mesh.colors = newColorsArr;
+			mesh.Optimize ();
+			mesh.RecalculateNormals ();
+		} else {
+			print ("caught");
+			column.world.chunkUpdateQueue.Add (this);
+		}
 		newMesh.Clear ();
 	}
 }
