@@ -83,16 +83,20 @@ public class GameWorld : MonoBehaviour
 	}
 
 	void RenderChunk(System.Object o) {
-		int i = (int)o;
-		lock (currentlyWorkingChunk[i]) {
-			try {
-				currentlyWorkingChunk [i].GenerateMesh ();
-			} catch(System.Exception e) {
-				Debug.LogError(e);
+		try {
+			int i = (int)o;
+			lock (currentlyWorkingChunk[i]) {
+				try {
+					currentlyWorkingChunk [i].GenerateMesh ();
+				} catch(System.Exception e) {
+					Debug.LogError(e);
+				}
 			}
+			currentlyWorkingChunk [i] = null;
+			lock(chunkUpdaterIdle) chunkUpdaterIdle [i] = true;
+		} catch (System.Exception e) {
+			Debug.LogError(e);
 		}
-		currentlyWorkingChunk [i] = null;
-		lock(chunkUpdaterIdle) chunkUpdaterIdle [i] = true;
 	}
 
 	public int saveInterval = 10000;
@@ -108,7 +112,7 @@ public class GameWorld : MonoBehaviour
 					}
 				}
 			} catch (System.Exception e) {
-				//print (e);
+				Debug.LogError (e);
 			}
 		}
 	}

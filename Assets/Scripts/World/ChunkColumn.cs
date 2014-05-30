@@ -138,63 +138,67 @@ public class ChunkColumn : MonoBehaviour
     
 	public void GenerateTerrain ()
 	{
-		if(!Load()) {
-			// gen terrain
-			int startX = (int)location.x * chunkSize;
-			int startZ = (int)location.y * chunkSize;
-			
-			byte stoneID = ListBlocks.STONE;
-			byte dirtID = ListBlocks.DIRT;
-			byte grassID = ListBlocks.GRASS;
-			byte bedrockID = ListBlocks.BEDROCK;
-			
-			for (int x=startX; x<startX + chunkSize; x++) {
-				for (int z=startZ; z<startZ + chunkSize; z++) {
-					int stone0 = 02 + PerlinNoise (x, 02, z, 25, 7, 1.5f);
-					int stone1 = 07 + PerlinNoise (x, 07, z, 25, 7, 1.5f);
-					int stone2 = 15 + PerlinNoise (x, 15, z, 25, 7, 1.5f);
-					int stone3 = 25 + PerlinNoise (x, 25, z, 25, 7, 1.5f);
-					int stone4 = 35 + PerlinNoise (x, 35, z, 25, 7, 1.5f);
-					int dirt   = 06 + PerlinNoise (x, 06 + stone4, z, 25, 2, 1.0f) + stone4;
+		try {
+			if(!Load()) {
+				// gen terrain
+				int startX = (int)location.x * chunkSize;
+				int startZ = (int)location.y * chunkSize;
+				
+				byte stoneID = ListBlocks.STONE;
+				byte dirtID = ListBlocks.DIRT;
+				byte grassID = ListBlocks.GRASS;
+				byte bedrockID = ListBlocks.BEDROCK;
+				
+				for (int x=startX; x<startX + chunkSize; x++) {
+					for (int z=startZ; z<startZ + chunkSize; z++) {
+						int stone0 = 02 + PerlinNoise (x, 02, z, 25, 7, 1.5f);
+						int stone1 = 07 + PerlinNoise (x, 07, z, 25, 7, 1.5f);
+						int stone2 = 15 + PerlinNoise (x, 15, z, 25, 7, 1.5f);
+						int stone3 = 25 + PerlinNoise (x, 25, z, 25, 7, 1.5f);
+						int stone4 = 35 + PerlinNoise (x, 35, z, 25, 7, 1.5f);
+						int dirt   = 06 + PerlinNoise (x, 06 + stone4, z, 25, 2, 1.0f) + stone4;
 
-					int bX = x - startX;
-					int bZ = z - startZ;
+						int bX = x - startX;
+						int bZ = z - startZ;
 
-					for (int y=0; y < height * chunkSize; y++) {
-						if (y == 0) {
-							data.blockArray [bX, y, bZ] = bedrockID;
-						} else if (y <= stone0) {
-							data.blockArray [bX, y, bZ] = stoneID;
-							data.metaArray [bX, y, bZ] = 4;
-						} else if (y <= stone1) {
-							data.blockArray [bX, y, bZ] = stoneID;
-							data.metaArray [bX, y, bZ] = 3;
-						} else if (y <= stone2) {
-							data.blockArray [bX, y, bZ] = stoneID;
-							data.metaArray [bX, y, bZ] = 2;
-						} else if (y <= stone3) {
-							data.blockArray [bX, y, bZ] = stoneID;
-							data.metaArray [bX, y, bZ] = 1;
-						} else if (y <= stone4) {
-							data.blockArray [bX, y, bZ] = stoneID;
-							data.metaArray [bX, y, bZ] = 0;
-						} else if (y < dirt) {
-							data.blockArray [bX, y, bZ] = dirtID;
-						} else if (y == dirt) {
-							data.blockArray [bX, y, bZ] = grassID;
+						for (int y=0; y < height * chunkSize; y++) {
+							if (y == 0) {
+								data.blockArray [bX, y, bZ] = bedrockID;
+							} else if (y <= stone0) {
+								data.blockArray [bX, y, bZ] = stoneID;
+								data.metaArray [bX, y, bZ] = 4;
+							} else if (y <= stone1) {
+								data.blockArray [bX, y, bZ] = stoneID;
+								data.metaArray [bX, y, bZ] = 3;
+							} else if (y <= stone2) {
+								data.blockArray [bX, y, bZ] = stoneID;
+								data.metaArray [bX, y, bZ] = 2;
+							} else if (y <= stone3) {
+								data.blockArray [bX, y, bZ] = stoneID;
+								data.metaArray [bX, y, bZ] = 1;
+							} else if (y <= stone4) {
+								data.blockArray [bX, y, bZ] = stoneID;
+								data.metaArray [bX, y, bZ] = 0;
+							} else if (y < dirt) {
+								data.blockArray [bX, y, bZ] = dirtID;
+							} else if (y == dirt) {
+								data.blockArray [bX, y, bZ] = grassID;
+							}
+
+							blocks [data.blockArray [bX, y, bZ]].OnLoad (world, x, y, z, data.metaArray [bX, y, bZ]);
 						}
-
-						blocks [data.blockArray [bX, y, bZ]].OnLoad (world, x, y, z, data.metaArray [bX, y, bZ]);
 					}
 				}
+
+				GenerateSunlight ();
+				needsSave = true;
 			}
 
-			GenerateSunlight ();
-			needsSave = true;
-		}
-
-		foreach (Chunk c in chunks) {
-			c.modified = true;
+			foreach (Chunk c in chunks) {
+				c.modified = true;
+			}
+		} catch (System.Exception e) {
+			Debug.LogError (e);
 		}
 	}
 
@@ -315,6 +319,8 @@ public class ChunkColumn : MonoBehaviour
 		}
         
 		// block at walls
+		while (chunks.Length < height || ReferenceEquals( chunks [y / chunkSize], null ))
+			Thread.Sleep (1);
 		chunks [y / chunkSize].modified = true;
 		if (blocks [data.blockArray [x, y, z]].opaque) {
 			data.lightArray [x, y, z] = 0;
