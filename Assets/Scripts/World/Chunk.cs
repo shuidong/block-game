@@ -41,9 +41,11 @@ public class Chunk : MonoBehaviour {
 		if (!hold) {
 			if (modified) {
 				//GenerateMesh ();
-				if(!column.world.chunkUpdateQueue.Contains(this))
-					column.world.chunkUpdateQueue.Add(this);
-				modified = false;
+				lock(column.world.chunkUpdateQueue) {
+					if(!column.world.chunkUpdateQueue.Contains(this))
+						column.world.chunkUpdateQueue.Add(this);
+					modified = false;
+				}
 			}
 
 			if (needsUpdate) {
@@ -58,6 +60,10 @@ public class Chunk : MonoBehaviour {
 		Vector3 center = transform.position + size / 2;
 		Gizmos.color = Color.black;
 		Gizmos.DrawWireCube (center, size);
+	}
+
+	void OnDestroy() {
+		column.world.chunkUpdateQueue.Remove (this);
 	}
 
 	public BlockMeta LocalBlock (int x, int y, int z, byte def)
@@ -93,22 +99,24 @@ public class Chunk : MonoBehaviour {
 
 	private void UpdateMesh ()
 	{
-		int numVerts = mesh.vertices.Length;
-		int numUV = mesh.uv.Length;
-		int numColors = mesh.colors.Length;
+		lock (this) {
+			//int numVerts = mesh.vertices.Length;
+			//int numUV = mesh.uv.Length;
+			//int numColors = mesh.colors.Length;
 
-		if (numVerts == numUV && numVerts == numColors) {
-			mesh.Clear ();
-			mesh.vertices = newVerticesArr;
-			mesh.uv = newUVArr;
-			mesh.triangles = newTrianglesArr;
-			mesh.colors = newColorsArr;
-			mesh.Optimize ();
-			mesh.RecalculateNormals ();
-		} else {
-			print ("caught");
-			column.world.chunkUpdateQueue.Add (this);
+			//if (numVerts == numUV && numVerts == numColors) {
+				mesh.Clear ();
+				mesh.vertices = newVerticesArr;
+				mesh.uv = newUVArr;
+				mesh.triangles = newTrianglesArr;
+				mesh.colors = newColorsArr;
+				mesh.Optimize ();
+				mesh.RecalculateNormals ();
+			//} else {
+			//	print ("caught");
+			//	modified = true;
+			//}
+			newMesh.Clear ();
 		}
-		newMesh.Clear ();
 	}
 }

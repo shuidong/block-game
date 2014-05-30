@@ -31,6 +31,8 @@ public class GameWorld : MonoBehaviour
 	private Chunk[] currentlyWorkingChunk;
 	private int numCPU;
 
+	//
+
 	void Start ()
 	{
 		numCPU = SystemInfo.processorCount;
@@ -48,42 +50,46 @@ public class GameWorld : MonoBehaviour
 		Vector3 playerPos = player == null ? Vector3.zero : player.transform.position;
 		Vector3 playerChunk = GetChunkLocation ((int)playerPos.x, (int)playerPos.y, (int)playerPos.z);
 
+		// render chunks
 		for (int i = 0; i < numCPU; i++) {
-			if (chunkUpdaterIdle[i] && chunkUpdateQueue.Count > 0) {
+			if (chunkUpdaterIdle [i] && chunkUpdateQueue.Count > 0) {
 				// find closest chunk
 				float bestDist = float.MaxValue;
 				int bestIndex = -1;
 				for (int j = 0; j < chunkUpdateQueue.Count; j++) {
-					float dist = Vector3.Distance(playerChunk, chunkUpdateQueue[j].location);
-					if(dist < bestDist) {
+					float dist = Vector3.Distance (playerChunk, chunkUpdateQueue [j].location);
+					if (dist < bestDist) {
 						bestIndex = j;
 						bestDist = dist;
 					}
 				}
 
 				// update the chunk
-				Chunk c = chunkUpdateQueue[bestIndex];
-				if(!c.needsUpdate) {
-					currentlyWorkingChunk[i] = c;
+				Chunk c = chunkUpdateQueue [bestIndex];
+				if (!c.needsUpdate) {
+					currentlyWorkingChunk [i] = c;
 					chunkUpdateQueue.RemoveAt (bestIndex);
 
-					chunkUpdaterIdle[i] = false;
+					lock (chunkUpdaterIdle) chunkUpdaterIdle [i] = false;
 					Thread t = new Thread (new ParameterizedThreadStart (RenderChunk));
 					t.Priority = System.Threading.ThreadPriority.Highest;
 					t.Start (i);
 				}
-
 			}
-		}
+			}
 	}
 
 	void RenderChunk(System.Object o) {
 		int i = (int)o;
 		lock (currentlyWorkingChunk[i]) {
-			currentlyWorkingChunk [i].GenerateMesh ();
+			try {
+				currentlyWorkingChunk [i].GenerateMesh ();
+			} catch(System.Exception e) {
+				Debug.LogError(e);
+			}
 		}
-		chunkUpdaterIdle [i] = true;
 		currentlyWorkingChunk [i] = null;
+		lock(chunkUpdaterIdle) chunkUpdaterIdle [i] = true;
 	}
 
 	public void LoadChunks ()
@@ -151,7 +157,7 @@ public class GameWorld : MonoBehaviour
 				// wait for chunks to render
 				while (chunkUpdateQueue.Count > 0) {
 					loadingScreen.SetText("RENDER: (" + chunkUpdateQueue.Count + " left)");
-					yield return new WaitForSeconds(0.5f);
+					yield return new WaitForSeconds(0.1f);
 				}
 
 				player = Instantiate (playerPrefab, spawnPoint, Quaternion.identity) as GameObject;
@@ -340,5 +346,25 @@ public class GameWorld : MonoBehaviour
 				col.chunks [(int)loc.y].modified = true;
 			}
 		}
+	}
+	
+	Rect debugRect = new Rect(Screen.width-215, 50, 200, 250);
+	void OnGUI()
+	{
+		GUI.color = Color.white;
+		string s = "World Info\n";
+		s += "Columns Loaded: " + loadedWorld.Count + "\n";
+		s += "Load Distance: [" + loadRange + ", " + unloadRange + "]\n";
+		s += "Chunk Render Queue: " + chunkUpdateQueue.Count + "\n";
+		s += "Render Threads:\n";
+		for (int i = 0; i < chunkUpdaterIdle.Length; i++) {
+			s += "#" + i + ": " + (chunkUpdaterIdle[i] ? "Idle\n" : "Busy\n");
+		}
+		debugRect = GUI.Window(1, debugRect, DoMyWindow, s);
+	}
+	
+	void DoMyWindow(int windowID)
+	{
+		GUI.DragWindow(new Rect(0, 0, Screen.width, Screen.height));
 	}
 }
