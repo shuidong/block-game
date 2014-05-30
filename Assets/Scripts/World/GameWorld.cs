@@ -101,15 +101,26 @@ public class GameWorld : MonoBehaviour
 
 	public int saveInterval = 10000;
 	public bool playing = true;
+
 	void SaveColumns() {
 		while (playing) {
 			try {
 				Thread.Sleep(saveInterval);
-				foreach (ChunkColumn col in loadedWorld.Values) {
-					if (col.needsSave) {
-						col.Save();
-						col.needsSave = false;
+
+				// find columns that need saving
+				List<ChunkColumn> cols = new List<ChunkColumn>();
+				lock(loadedWorld) {
+					foreach (ChunkColumn col in loadedWorld.Values) {
+						if (col.needsSave) {
+							cols.Add(col);
+						}
 					}
+				}
+
+				// save them after unlocking
+				foreach (ChunkColumn col in cols) {
+					col.Save();
+					col.needsSave = false;
 				}
 			} catch (System.Exception e) {
 				Debug.LogError (e);
@@ -272,7 +283,9 @@ public class GameWorld : MonoBehaviour
 			column.location = loc;
 			column.chunkSize = chunkSize;
 			column.data = new ChunkColumn.PersistentData(chunkSize, height);
-			loadedWorld.Add (loc, column);
+			lock(loadedWorld) {
+				loadedWorld.Add (loc, column);
+			}
 		}
 	}
 
@@ -293,7 +306,9 @@ public class GameWorld : MonoBehaviour
 		if (loadedWorld.ContainsKey (loc)) {
 			ChunkColumn col = loadedWorld [loc];
 			Object.Destroy (col.gameObject);
-			loadedWorld.Remove (loc);
+			lock(loadedWorld) {
+				loadedWorld.Remove (loc);
+			}
 		}
 	}
 

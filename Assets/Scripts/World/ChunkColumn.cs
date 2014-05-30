@@ -320,7 +320,7 @@ public class ChunkColumn : MonoBehaviour
         
 		// block at walls
 		while (chunks.Length < height || ReferenceEquals( chunks [y / chunkSize], null ))
-			Thread.Sleep (1);
+			Thread.Sleep (10);
 		chunks [y / chunkSize].modified = true;
 		if (blocks [data.blockArray [x, y, z]].opaque) {
 			data.lightArray [x, y, z] = 0;

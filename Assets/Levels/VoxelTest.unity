@@ -114,6 +114,8 @@ MonoBehaviour:
   loadingScreen: {fileID: 1534277426}
   player: {fileID: 0}
   chunkUpdateQueue: []
+  saveInterval: 10000
+  playing: 1
 --- !u!4 &22076495
 Transform:
   m_ObjectHideFlags: 0
