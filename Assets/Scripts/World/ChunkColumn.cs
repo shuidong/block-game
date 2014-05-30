@@ -1,20 +1,55 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Threading;
+using System.Text;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+using System.Reflection;
 
 public class ChunkColumn : MonoBehaviour
 {
 	[HideInInspector]
 	public GameWorld world;
 
-	[HideInInspector]
-	public byte[,,] blockData;
+	[System.Serializable]
+	public class PersistentData : ISerializable {
+		private const string KEY_BLOCK = "Blocks array";
+		private const string KEY_LIGHT = "Lighting array";
+		private const string KEY_META  = "Metadata array";
 
-	[HideInInspector]
-	public byte[,,] lightData;
+		public byte[,,] blockArray;
+		public byte[,,] lightArray;
+		public byte[,,] metaArray;
 
-	[HideInInspector]
-	public byte[,,] metaData;
+		public PersistentData(int chunkSize, int height) {
+			blockArray = new byte[chunkSize,chunkSize*height,chunkSize];
+			lightArray = new byte[chunkSize,chunkSize*height,chunkSize];
+			metaArray = new byte[chunkSize,chunkSize*height,chunkSize];
+		}
+
+		public PersistentData (SerializationInfo info, StreamingContext ctxt) {
+			string version = (string)info.GetValue(Constants.KEY_SAVE_VERSION, typeof(string));
+
+			if (version == Constants.SAVE_VERSION_1) {
+				blockArray = (byte[,,])info.GetValue(KEY_BLOCK, typeof(byte[,,]));
+				lightArray = (byte[,,])info.GetValue(KEY_LIGHT, typeof(byte[,,]));
+				metaArray  = (byte[,,])info.GetValue(KEY_META , typeof(byte[,,]));
+			} else {
+				print ("ERROR LOADING CHUNK, VERSION IS: " + version);
+			}
+		}
+
+		public void GetObjectData (SerializationInfo info, StreamingContext ctxt) {
+			info.AddValue (Constants.KEY_SAVE_VERSION, Constants.SAVE_VERSION_1);
+			info.AddValue (KEY_BLOCK, blockArray);
+			info.AddValue (KEY_LIGHT, lightArray);
+			info.AddValue (KEY_META , metaArray );
+		}
+	}
+	public PersistentData data;
+	public string savePath;
+	public bool needsSave;
 
 	[HideInInspector]
 	public Chunk[] chunks;
@@ -34,6 +69,7 @@ public class ChunkColumn : MonoBehaviour
 	{
 		chunks = new Chunk[height];
 		blocks = ListBlocks.instance.blocks;
+		savePath = Application.persistentDataPath + "/" + world.worldName + "/" + ((int)location.x) + "x" + ((int)location.y) + ".blockdata";
 
 		// instantiate chunks
 		int x = (int)location.x;
@@ -63,8 +99,8 @@ public class ChunkColumn : MonoBehaviour
 			int x = Random.Range (0, chunkSize);
 			int y = Random.Range (0, wHeight);
 			int z = Random.Range (0, chunkSize);
-			byte blockID = blockData [x, y, z];
-			blocks [blockID].BlockTick (world, xOffset + x, y, zOffset + z, metaData[x, y, z]);
+			byte blockID = data.blockArray [x, y, z];
+			blocks [blockID].BlockTick (world, xOffset + x, y, zOffset + z, data.metaArray[x, y, z]);
 		}
 	}
 
@@ -75,7 +111,7 @@ public class ChunkColumn : MonoBehaviour
 		if (x < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
 			return world.Block ((int)location.x * chunkSize + x, y, (int)location.y * chunkSize + z, def);
 		} else {
-			return new BlockMeta (blockData [x, y, z], metaData [x, y, z]);
+			return new BlockMeta (data.blockArray [x, y, z], data.metaArray [x, y, z]);
 		}
 	}
 
@@ -86,73 +122,76 @@ public class ChunkColumn : MonoBehaviour
 		if (x < 0 || z < 0 || x >= chunkSize || z >= chunkSize) {
 			return world.Light ((int)location.x * chunkSize + x, y, (int)location.y * chunkSize + z, def);
 		} else {
-			return lightData [x, y, z];
+			return data.lightArray [x, y, z];
 		}
 	}
 
 	public BlockMeta LocalBlock (int x, int y, int z)
 	{
-		return new BlockMeta (blockData [x, y, z], metaData [x, y, z]);
+		return new BlockMeta (data.blockArray [x, y, z], data.metaArray [x, y, z]);
 	}
 
 	public byte LocalLight (int x, int y, int z)
 	{
-		return lightData [x, y, z];
+		return data.lightArray [x, y, z];
 	}
     
 	public void GenerateTerrain ()
 	{
-		// gen terrain
-		int startX = (int)location.x * chunkSize;
-		int startZ = (int)location.y * chunkSize;
-		
-		byte stoneID = ListBlocks.STONE;
-		byte dirtID = ListBlocks.DIRT;
-		byte grassID = ListBlocks.GRASS;
-		byte bedrockID = ListBlocks.BEDROCK;
-		
-		for (int x=startX; x<startX + chunkSize; x++) {
-			for (int z=startZ; z<startZ + chunkSize; z++) {
-				int stone0 = 02 + PerlinNoise (x, 02, z, 25, 7, 1.5f);
-				int stone1 = 07 + PerlinNoise (x, 07, z, 25, 7, 1.5f);
-				int stone2 = 15 + PerlinNoise (x, 15, z, 25, 7, 1.5f);
-				int stone3 = 25 + PerlinNoise (x, 25, z, 25, 7, 1.5f);
-				int stone4 = 35 + PerlinNoise (x, 35, z, 25, 7, 1.5f);
-				int dirt   = 06 + PerlinNoise (x, 06 + stone4, z, 25, 2, 1.0f) + stone4;
+		if(!Load()) {
+			// gen terrain
+			int startX = (int)location.x * chunkSize;
+			int startZ = (int)location.y * chunkSize;
+			
+			byte stoneID = ListBlocks.STONE;
+			byte dirtID = ListBlocks.DIRT;
+			byte grassID = ListBlocks.GRASS;
+			byte bedrockID = ListBlocks.BEDROCK;
+			
+			for (int x=startX; x<startX + chunkSize; x++) {
+				for (int z=startZ; z<startZ + chunkSize; z++) {
+					int stone0 = 02 + PerlinNoise (x, 02, z, 25, 7, 1.5f);
+					int stone1 = 07 + PerlinNoise (x, 07, z, 25, 7, 1.5f);
+					int stone2 = 15 + PerlinNoise (x, 15, z, 25, 7, 1.5f);
+					int stone3 = 25 + PerlinNoise (x, 25, z, 25, 7, 1.5f);
+					int stone4 = 35 + PerlinNoise (x, 35, z, 25, 7, 1.5f);
+					int dirt   = 06 + PerlinNoise (x, 06 + stone4, z, 25, 2, 1.0f) + stone4;
 
-				int bX = x - startX;
-				int bZ = z - startZ;
+					int bX = x - startX;
+					int bZ = z - startZ;
 
-				for (int y=0; y < height * chunkSize; y++) {
-					if (y == 0) {
-						blockData [bX, y, bZ] = bedrockID;
-					} else if (y <= stone0) {
-						blockData [bX, y, bZ] = stoneID;
-						metaData [bX, y, bZ] = 4;
-					} else if (y <= stone1) {
-						blockData [bX, y, bZ] = stoneID;
-						metaData [bX, y, bZ] = 3;
-					} else if (y <= stone2) {
-						blockData [bX, y, bZ] = stoneID;
-						metaData [bX, y, bZ] = 2;
-					} else if (y <= stone3) {
-						blockData [bX, y, bZ] = stoneID;
-						metaData [bX, y, bZ] = 1;
-					} else if (y <= stone4) {
-						blockData [bX, y, bZ] = stoneID;
-						metaData [bX, y, bZ] = 0;
-					} else if (y < dirt) {
-						blockData [bX, y, bZ] = dirtID;
-					} else if (y == dirt) {
-						blockData [bX, y, bZ] = grassID;
+					for (int y=0; y < height * chunkSize; y++) {
+						if (y == 0) {
+							data.blockArray [bX, y, bZ] = bedrockID;
+						} else if (y <= stone0) {
+							data.blockArray [bX, y, bZ] = stoneID;
+							data.metaArray [bX, y, bZ] = 4;
+						} else if (y <= stone1) {
+							data.blockArray [bX, y, bZ] = stoneID;
+							data.metaArray [bX, y, bZ] = 3;
+						} else if (y <= stone2) {
+							data.blockArray [bX, y, bZ] = stoneID;
+							data.metaArray [bX, y, bZ] = 2;
+						} else if (y <= stone3) {
+							data.blockArray [bX, y, bZ] = stoneID;
+							data.metaArray [bX, y, bZ] = 1;
+						} else if (y <= stone4) {
+							data.blockArray [bX, y, bZ] = stoneID;
+							data.metaArray [bX, y, bZ] = 0;
+						} else if (y < dirt) {
+							data.blockArray [bX, y, bZ] = dirtID;
+						} else if (y == dirt) {
+							data.blockArray [bX, y, bZ] = grassID;
+						}
+
+						blocks [data.blockArray [bX, y, bZ]].OnLoad (world, x, y, z, data.metaArray [bX, y, bZ]);
 					}
-
-					blocks [blockData [bX, y, bZ]].OnLoad (world, x, y, z, metaData [bX, y, bZ]);
 				}
 			}
-		}
 
-		GenerateSunlight ();
+			GenerateSunlight ();
+			needsSave = true;
+		}
 
 		foreach (Chunk c in chunks) {
 			c.modified = true;
@@ -168,10 +207,10 @@ public class ChunkColumn : MonoBehaviour
 		for (int bX=0; bX<chunkSize; bX++) {
 			for (int bZ=0; bZ<chunkSize; bZ++) {
 				for (int y = yMax; y >= 0; y--) {
-					if (blocks [blockData [bX, y, bZ]].opaque) {
+					if (blocks [data.blockArray [bX, y, bZ]].opaque) {
 						break;
 					} else {
-						lightData [bX, y, bZ] = maxLight;
+						data.lightArray [bX, y, bZ] = maxLight;
 					}
 				}
 			}
@@ -181,8 +220,8 @@ public class ChunkColumn : MonoBehaviour
 		for (int bX=0; bX<chunkSize; bX++) {
 			for (int bZ=0; bZ<chunkSize; bZ++) {
 				for (int y = yMax; y >= 0; y--) {
-					if (lightData [bX, y, bZ] > 0) {
-						FloodFillLight (bX, y, bZ, lightData [bX, y, bZ], true);
+					if (data.lightArray [bX, y, bZ] > 0) {
+						FloodFillLight (bX, y, bZ, data.lightArray [bX, y, bZ], true);
 					} else {
 						break;
 					}
@@ -194,7 +233,7 @@ public class ChunkColumn : MonoBehaviour
 	public bool CanSeeSky (int x, int y, int z)
 	{
 		for (int i = y+1; i < height * chunkSize; i++) {
-			if (blocks [blockData [x, i, z]].opaque)
+			if (blocks [data.blockArray [x, i, z]].opaque)
 				return false;
 		}
 		return true;
@@ -228,7 +267,7 @@ public class ChunkColumn : MonoBehaviour
 		}
 
 		// darken and spread
-		byte light = lightData [x, y, z];
+		byte light = data.lightArray [x, y, z];
 		if (light > 0 && light < prevLight) {
 			// spread
 			FloodFillDarkness (x - 1, y, z, light);
@@ -239,7 +278,7 @@ public class ChunkColumn : MonoBehaviour
 			FloodFillDarkness (x, y, z + 1, light);
 
 			// darken
-			lightData [x, y, z] = 0;
+			data.lightArray [x, y, z] = 0;
 			chunks [y / chunkSize].modified = true;
 		}
 	}
@@ -277,14 +316,14 @@ public class ChunkColumn : MonoBehaviour
         
 		// block at walls
 		chunks [y / chunkSize].modified = true;
-		if (blocks [blockData [x, y, z]].opaque) {
-			lightData [x, y, z] = 0;
+		if (blocks [data.blockArray [x, y, z]].opaque) {
+			data.lightArray [x, y, z] = 0;
 			return;
 		}
 
 		//spread here if needed
-		if (remainingLight > 0 && (source || lightData [x, y, z] < remainingLight)) {
-			lightData [x, y, z] = remainingLight;
+		if (remainingLight > 0 && (source || data.lightArray [x, y, z] < remainingLight)) {
+			data.lightArray [x, y, z] = remainingLight;
 			remainingLight--;
 
 			// spread to neighboring blocks
@@ -309,7 +348,7 @@ public class ChunkColumn : MonoBehaviour
 				for (int y=0; y < height * chunkSize; y++) {
 					int bX = x - startX;
 					int bZ = z - startZ;
-					blocks [blockData [bX, y, bZ]].OnUnload (world, x, y, z, metaData [bX, y, bZ]);
+					blocks [data.blockArray [bX, y, bZ]].OnUnload (world, x, y, z, data.metaArray [bX, y, bZ]);
 				}
 			}
 		}
@@ -323,4 +362,57 @@ public class ChunkColumn : MonoBehaviour
 			rValue = Mathf.Pow (rValue, power);
 		return (int)rValue;
 	}
+
+	public void Save () {
+		string fileName = savePath;
+
+		// create folder
+		string folder = System.IO.Path.GetDirectoryName(fileName);
+		if (!System.IO.Directory.Exists(folder)) {
+			System.IO.Directory.CreateDirectory(folder);
+		}
+
+		// save to file
+		Stream stream = File.Open(fileName, FileMode.OpenOrCreate);
+		BinaryFormatter bformatter = new BinaryFormatter();
+		bformatter.Binder = new VersionDeserializationBinder();
+		bformatter.Serialize(stream, data);
+        stream.Close();
+    }
+
+	public bool Load () {
+		string fileName = savePath;
+
+		// make sure the file exists
+		if (!File.Exists (fileName))
+			return false;
+
+		// load the file
+		Stream stream = File.Open(fileName, FileMode.Open);
+		BinaryFormatter bformatter = new BinaryFormatter();
+		bformatter.Binder = new VersionDeserializationBinder(); 
+		data = (PersistentData)bformatter.Deserialize(stream);
+        stream.Close();
+		return true;
+    }
+}
+
+public sealed class VersionDeserializationBinder : SerializationBinder 
+{ 
+	public override System.Type BindToType( string assemblyName, string typeName )
+	{ 
+		if ( !string.IsNullOrEmpty( assemblyName ) && !string.IsNullOrEmpty( typeName ) ) 
+		{ 
+			System.Type typeToDeserialize = null; 
+			
+			assemblyName = Assembly.GetExecutingAssembly().FullName; 
+			
+			// The following line of code returns the type. 
+			typeToDeserialize = System.Type.GetType( System.String.Format( "{0}, {1}", typeName, assemblyName ) ); 
+			
+			return typeToDeserialize; 
+		} 
+        
+        return null; 
+    } 
 }

@@ -41,6 +41,7 @@ public class Chunk : MonoBehaviour {
 		if (!hold) {
 			if (modified) {
 				//GenerateMesh ();
+				column.needsSave = true;
 				lock(column.world.chunkUpdateQueue) {
 					if(!column.world.chunkUpdateQueue.Contains(this))
 						column.world.chunkUpdateQueue.Add(this);

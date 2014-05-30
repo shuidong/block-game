@@ -44,6 +44,9 @@ public class GameWorld : MonoBehaviour
 		transform.position = Vector3.zero;
 		loadedWorld = new Dictionary<Vector2, ChunkColumn> ();
 		LoadChunks ();
+		Thread t = new Thread (new ThreadStart (SaveColumns));
+		t.Priority = System.Threading.ThreadPriority.Lowest;
+		t.Start ();
 	}
 
 	void Update() {
@@ -76,7 +79,7 @@ public class GameWorld : MonoBehaviour
 					t.Start (i);
 				}
 			}
-			}
+		}
 	}
 
 	void RenderChunk(System.Object o) {
@@ -90,6 +93,28 @@ public class GameWorld : MonoBehaviour
 		}
 		currentlyWorkingChunk [i] = null;
 		lock(chunkUpdaterIdle) chunkUpdaterIdle [i] = true;
+	}
+
+	public int saveInterval = 10000;
+	public bool playing = true;
+	void SaveColumns() {
+		while (playing) {
+			try {
+				Thread.Sleep(saveInterval);
+				foreach (ChunkColumn col in loadedWorld.Values) {
+					if (col.needsSave) {
+						col.Save();
+						col.needsSave = false;
+					}
+				}
+			} catch (System.Exception e) {
+				//print (e);
+			}
+		}
+	}
+
+	void OnApplicationQuit() {
+		playing = false;
 	}
 
 	public void LoadChunks ()
@@ -242,9 +267,7 @@ public class GameWorld : MonoBehaviour
 			column.height = height;
 			column.location = loc;
 			column.chunkSize = chunkSize;
-			column.blockData = new byte[chunkSize, height * chunkSize, chunkSize];
-			column.metaData = new byte[chunkSize, height * chunkSize, chunkSize];
-			column.lightData = new byte[chunkSize, height * chunkSize, chunkSize];
+			column.data = new ChunkColumn.PersistentData(chunkSize, height);
 			loadedWorld.Add (loc, column);
 		}
 	}
@@ -283,8 +306,8 @@ public class GameWorld : MonoBehaviour
 			int cZ = mod (z, chunkSize);
 
 			// set block
-			col.blockData [cX, y, cZ] = block;
-			col.metaData [cX, y, cZ] = meta;
+			col.data.blockArray [cX, y, cZ] = block;
+			col.data.metaArray [cX, y, cZ] = meta;
 
 			// update lighting
 			if (col.CanSeeSky (cX, y, cZ)) {
@@ -293,19 +316,18 @@ public class GameWorld : MonoBehaviour
 				int yy = y;
 				if (blocks [block].opaque) {
 					// remove light which passed through this point
-					while (yy >= 0 && (y == yy || !blocks[col.blockData[cX, yy, cZ]].opaque)) {
+					while (yy >= 0 && (y == yy || !blocks[col.data.blockArray[cX, yy, cZ]].opaque)) {
 						col.FloodFillDarkness (cX, yy, cZ, CubeRenderer.MAX_LIGHT + 1);
 						yy--;
 					}
 				} else {
 					// flood fill sunlight
-					while (yy >= 0 && (!blocks[col.blockData[cX, yy, cZ]].opaque)) {
+					while (yy >= 0 && (!blocks[col.data.blockArray[cX, yy, cZ]].opaque)) {
 						col.FloodFillLight (cX, yy, cZ, CubeRenderer.MAX_LIGHT, true);
 						yy--;
 					}
 				}
 			} else {
-
 				if (blocks [block].opaque) {
 					// remove light which passed through this point
 					col.FloodFillDarkness (cX, y, cZ, CubeRenderer.MAX_LIGHT + 1);
@@ -321,6 +343,9 @@ public class GameWorld : MonoBehaviour
 				}
 			}
 		}
+
+		// save the column
+		col.needsSave = true;
 	}
 
 	void RefillLightAtPosition (int x, int y, int z)
@@ -331,7 +356,7 @@ public class GameWorld : MonoBehaviour
 			if (loadedWorld.TryGetValue (loc, out col)) {
 				x = mod (x, chunkSize);
 				z = mod (z, chunkSize);
-				col.FloodFillLight (x, y, z, col.lightData [x, y, z], true);
+				col.FloodFillLight (x, y, z, col.data.lightArray [x, y, z], true);
 			}
 		}
 	}
