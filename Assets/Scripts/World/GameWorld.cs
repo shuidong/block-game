@@ -44,9 +44,10 @@ public class GameWorld : MonoBehaviour
 		transform.position = Vector3.zero;
 		loadedWorld = new Dictionary<Vector2, ChunkColumn> ();
 		LoadChunks ();
-		Thread t = new Thread (new ThreadStart (SaveColumns));
-		t.Priority = System.Threading.ThreadPriority.Lowest;
-		t.Start ();
+
+		//Thread t = new Thread (new ThreadStart (SaveColumns));
+		//t.Priority = System.Threading.ThreadPriority.Lowest;
+		//t.Start ();
 	}
 
 	void Update() {
@@ -54,29 +55,31 @@ public class GameWorld : MonoBehaviour
 		Vector3 playerChunk = GetChunkLocation ((int)playerPos.x, (int)playerPos.y, (int)playerPos.z);
 
 		// render chunks
-		for (int i = 0; i < numCPU; i++) {
-			if (chunkUpdaterIdle [i] && chunkUpdateQueue.Count > 0) {
-				// find closest chunk
-				float bestDist = float.MaxValue;
-				int bestIndex = -1;
-				for (int j = 0; j < chunkUpdateQueue.Count; j++) {
-					float dist = Vector3.Distance (playerChunk, chunkUpdateQueue [j].location);
-					if (dist < bestDist) {
-						bestIndex = j;
-						bestDist = dist;
+		lock(chunkUpdateQueue) {
+			for (int i = 0; i < numCPU; i++) {
+				if (chunkUpdaterIdle [i] && chunkUpdateQueue.Count > 0) {
+					// find closest chunk
+					float bestDist = float.MaxValue;
+					int bestIndex = -1;
+					for (int j = 0; j < chunkUpdateQueue.Count; j++) {
+						float dist = Vector3.Distance (playerChunk, chunkUpdateQueue [j].location);
+						if (dist < bestDist) {
+							bestIndex = j;
+							bestDist = dist;
+						}
 					}
-				}
 
-				// update the chunk
-				Chunk c = chunkUpdateQueue [bestIndex];
-				if (!c.needsUpdate) {
-					currentlyWorkingChunk [i] = c;
-					chunkUpdateQueue.RemoveAt (bestIndex);
+					// update the chunk
+					Chunk c = chunkUpdateQueue [bestIndex];
+					if (!c.needsUpdate) {
+						currentlyWorkingChunk [i] = c;
+						chunkUpdateQueue.RemoveAt (bestIndex);
 
-					lock (chunkUpdaterIdle) chunkUpdaterIdle [i] = false;
-					Thread t = new Thread (new ParameterizedThreadStart (RenderChunk));
-					t.Priority = System.Threading.ThreadPriority.Highest;
-					t.Start (i);
+						lock (chunkUpdaterIdle) chunkUpdaterIdle [i] = false;
+						Thread t = new Thread (new ParameterizedThreadStart (RenderChunk));
+						t.Priority = System.Threading.ThreadPriority.Highest;
+						t.Start (i);
+					}
 				}
 			}
 		}
@@ -115,12 +118,14 @@ public class GameWorld : MonoBehaviour
 							cols.Add(col);
 						}
 					}
-				}
 
-				// save them after unlocking
-				foreach (ChunkColumn col in cols) {
-					col.Save();
-					col.needsSave = false;
+					// save them after unlocking
+					if (cols.Count > 0) {
+						foreach (ChunkColumn col in cols) {
+							col.Save();
+							col.needsSave = false;
+						}
+					}
 				}
 			} catch (System.Exception e) {
 				Debug.LogError (e);
@@ -249,8 +254,10 @@ public class GameWorld : MonoBehaviour
 		ChunkColumn column;
 		
 		// return the block if it's loaded
-		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
-			return column.LocalBlock (mod (x, chunkSize), y, mod (z, chunkSize));
+		lock (loadedWorld) {
+			if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
+				return column.LocalBlock (mod (x, chunkSize), y, mod (z, chunkSize));
+			}
 		}
 		
 		// else return def
@@ -263,8 +270,10 @@ public class GameWorld : MonoBehaviour
 		ChunkColumn column;
 		
 		// return the block if it's loaded
-		if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
-			return column.LocalLight (mod (x, chunkSize), y, mod (z, chunkSize));
+		lock (loadedWorld) {
+			if (y >= 0 && y < height * chunkSize && loadedWorld.TryGetValue (loc, out column)) {
+				return column.LocalLight (mod (x, chunkSize), y, mod (z, chunkSize));
+			}
 		}
 		
 		// else return def
@@ -283,9 +292,6 @@ public class GameWorld : MonoBehaviour
 			column.location = loc;
 			column.chunkSize = chunkSize;
 			column.data = new ChunkColumn.PersistentData(chunkSize, height);
-			lock(loadedWorld) {
-				loadedWorld.Add (loc, column);
-			}
 		}
 	}
 
@@ -304,11 +310,11 @@ public class GameWorld : MonoBehaviour
 	{
 		Vector2 loc = new Vector2 (x, z);
 		if (loadedWorld.ContainsKey (loc)) {
-			ChunkColumn col = loadedWorld [loc];
-			Object.Destroy (col.gameObject);
+			ChunkColumn col = loadedWorld[loc];
 			lock(loadedWorld) {
 				loadedWorld.Remove (loc);
 			}
+			Object.Destroy (col.gameObject);
 		}
 	}
 

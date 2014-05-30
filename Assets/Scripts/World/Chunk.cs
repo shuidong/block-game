@@ -64,7 +64,9 @@ public class Chunk : MonoBehaviour {
 	}
 
 	void OnDestroy() {
-		column.world.chunkUpdateQueue.Remove (this);
+		lock (column.world.chunkUpdateQueue) {
+			column.world.chunkUpdateQueue.Remove (this);
+		}
 	}
 
 	public BlockMeta LocalBlock (int x, int y, int z, byte def)

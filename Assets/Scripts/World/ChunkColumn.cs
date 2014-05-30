@@ -71,6 +71,10 @@ public class ChunkColumn : MonoBehaviour
 		blocks = ListBlocks.instance.blocks;
 		savePath = Application.persistentDataPath + "/" + world.worldName + "/" + ((int)location.x) + "x" + ((int)location.y) + ".blockdata";
 
+		lock(world.loadedWorld) {
+			world.loadedWorld.Add (location, this);
+		}
+
 		// instantiate chunks
 		int x = (int)location.x;
 		int y;
@@ -248,20 +252,20 @@ public class ChunkColumn : MonoBehaviour
 		// check if flood needs to go to another column
 		ChunkColumn nextCol;
 		if (x < 0) {
-			world.loadedWorld.TryGetValue (location + new Vector2 (-1, 0), out nextCol);
-			nextCol.FloodFillDarkness (x + chunkSize, y, z, prevLight);
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (-1, 0), out nextCol))
+				nextCol.FloodFillDarkness (x + chunkSize, y, z, prevLight);
 			return;
 		} else if (x >= chunkSize) {
-			world.loadedWorld.TryGetValue (location + new Vector2 (1, 0), out nextCol);
-			nextCol.FloodFillDarkness (x - chunkSize, y, z, prevLight);
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (1, 0), out nextCol))
+				nextCol.FloodFillDarkness (x - chunkSize, y, z, prevLight);
 			return;
 		} else if (z < 0) {
-			world.loadedWorld.TryGetValue (location + new Vector2 (0, -1), out nextCol);
-			nextCol.FloodFillDarkness (x, y, z + chunkSize, prevLight);
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (0, -1), out nextCol))
+				nextCol.FloodFillDarkness (x, y, z + chunkSize, prevLight);
 			return;
 		} else if (z >= chunkSize) {
-			world.loadedWorld.TryGetValue (location + new Vector2 (0, 1), out nextCol);
-			nextCol.FloodFillDarkness (x, y, z - chunkSize, prevLight);
+			if (world.loadedWorld.TryGetValue (location + new Vector2 (0, 1), out nextCol))
+				nextCol.FloodFillDarkness (x, y, z - chunkSize, prevLight);
 			return;
 		}
 		
@@ -372,34 +376,47 @@ public class ChunkColumn : MonoBehaviour
 	public void Save () {
 		string fileName = savePath;
 
-		// create folder
-		string folder = System.IO.Path.GetDirectoryName(fileName);
-		if (!System.IO.Directory.Exists(folder)) {
-			System.IO.Directory.CreateDirectory(folder);
-		}
+		try {
+			// create folder
+			string folder = System.IO.Path.GetDirectoryName(fileName);
+			if (!System.IO.Directory.Exists(folder)) {
+				System.IO.Directory.CreateDirectory(folder);
+			}
 
-		// save to file
-		Stream stream = File.Open(fileName, FileMode.OpenOrCreate);
-		BinaryFormatter bformatter = new BinaryFormatter();
-		bformatter.Binder = new VersionDeserializationBinder();
-		bformatter.Serialize(stream, data);
-        stream.Close();
+			// save to file
+			Stream stream = File.Open(fileName, FileMode.OpenOrCreate);
+			BinaryFormatter bformatter = new BinaryFormatter();
+			bformatter.Binder = new VersionDeserializationBinder();
+			bformatter.Serialize(stream, data);
+	        stream.Close();
+		} catch(System.Exception e) {
+			Debug.LogError (e);
+			if(File.Exists(fileName))
+				File.Delete(fileName);
+		}
     }
 
 	public bool Load () {
-		string fileName = savePath;
+		return false;
 
-		// make sure the file exists
-		if (!File.Exists (fileName))
+		/*string fileName = savePath;
+
+		try {
+			// make sure the file exists
+			if (!File.Exists (fileName))
+				return false;
+
+			// load the file
+			Stream stream = File.Open(fileName, FileMode.Open);
+			BinaryFormatter bformatter = new BinaryFormatter();
+			bformatter.Binder = new VersionDeserializationBinder(); 
+			data = (PersistentData)bformatter.Deserialize(stream);
+	        stream.Close();
+			return true;
+		} catch (System.Exception e) {
+			Debug.LogError (e);
 			return false;
-
-		// load the file
-		Stream stream = File.Open(fileName, FileMode.Open);
-		BinaryFormatter bformatter = new BinaryFormatter();
-		bformatter.Binder = new VersionDeserializationBinder(); 
-		data = (PersistentData)bformatter.Deserialize(stream);
-        stream.Close();
-		return true;
+		}*/
     }
 }
 
