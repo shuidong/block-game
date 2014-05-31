@@ -69,24 +69,56 @@ public class World
             
             // add columns within range
             foreach (Vector2i pos in addition) {
+                // TODO load from file if available
                 Column col = TerrainGen.Generate (worldType, pos);
+                // TODO update lighting
                 loadedData.Add (pos, col);
             }
         }
     }
 
     /** Return the block ID at the position (x, y, z). If the position is not currently loaded, return def */
-    public short GetBlockAt (int x, int y, int z, short def)
+    public ushort GetBlockAt (int worldX, int worldY, int worldZ, ushort def)
     {
         lock (this) {
-            Vector2i colPos = MiscMath.WorldToColumnCoords (x, z);
+            Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);
             Column col;
             if (loadedData.TryGetValue (colPos, out col)) {
-                x = MiscMath.Mod (x, CHUNK_SIZE);
-                z = MiscMath.Mod (z, CHUNK_SIZE);
-                return col.blockID [x, y, z];
+                int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
+                int localY = worldY;
+                int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
+
+                // return the block
+                return col.blockID [localX, localY, localZ];
             } else {
+                // not found ):
                 return def;
+            }
+        }
+    }
+
+    /** Set the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, do nothing */
+    public ushort SetBlockAt (int worldX, int worldY, int worldZ, ushort newBlock)
+    {
+        lock (this) {
+            Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);
+            Column col;
+            if (loadedData.TryGetValue (colPos, out col)) {
+                int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
+                int localY = worldY;
+                int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
+                ushort oldBlock = col.blockID [localX, localY, localZ];
+
+                // let the old block do whatever it needs to
+                Block.GetInstance(oldBlock).OnBreak(this, worldX, worldY, worldZ, newBlock);
+
+                // set the block
+                col.blockID [localX, localY, localZ] = newBlock;
+
+                // TODO update lighting
+
+                // let the new block do whatever it needs to
+                Block.GetInstance(newBlock).OnPlace(this, worldX, worldY, worldZ, oldBlock);
             }
         }
     }
