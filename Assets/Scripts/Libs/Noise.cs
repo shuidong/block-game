@@ -29,56 +29,10 @@ using UnityEngine;
 using System.Collections;
 using System;
 
-public class NoiseGen
-{
-	public double XScale = 1;
-	public double YScale = 1;
-	public double ZScale = 1;
-	public byte Octaves = 1;
-	
-	public double Scale
-	{
-		set
-		{
-			XScale = value;
-			YScale = value;
-			ZScale = value;
-		}
-	}
-	
-	public NoiseGen()
-	{
-		
-	}
-	
-	public NoiseGen(double pScale, byte pOctaves)
-	{
-		XScale = pScale;
-		YScale = pScale;
-		ZScale = pScale;
-		Octaves = pOctaves;
-	}
-	
-	public NoiseGen(double pXScale, double pYScale, byte pOctaves)
-	{
-		XScale = pXScale;
-		YScale = pYScale;
-		Octaves = pOctaves;
-	}
-	
-	public float GetNoise(double x, double y, double z, float amplitude)
-	{
-		if(Octaves > 1)
-			return Noise.GetOctaveNoise(x * XScale, y * YScale, z * ZScale, Octaves) * amplitude;
-		else
-			return Noise.GetNoise(x * XScale, y * YScale, z * ZScale) * amplitude;
-	}
-}
-
 // Simplex noise in 3D
 public static class Noise
 {
-	// Inner class to speed up gradient computations
+    // Inner class to speed up gradient computations
 	// (array access is a lot slower than member access)
 	private struct Grad
 	{

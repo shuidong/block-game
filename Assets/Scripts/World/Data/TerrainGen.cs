@@ -12,20 +12,19 @@ public class TerrainGen
         int worldHeight = World.CHUNK_SIZE * World.WORLD_HEIGHT;
 
         // basic stone world for now
-        NoiseGen gen = new NoiseGen (30, 1);
         for (int x = 0; x < World.CHUNK_SIZE; x++) {
             for (int z = 0; z < World.CHUNK_SIZE; z++) {
                 // generate height for this cell
-                int height = (int) gen.GetNoise (xOffset + x, 0, zOffset + z, worldHeight);
-                if (height < 10)
-                    height = 10;
-                if (height > worldHeight - 10)
-                    height = worldHeight - 10;
+                int stoneHeight = worldHeight / 2 - 3 + PerlinNoise (x + xOffset, 0, z + zOffset, 25, 6, 1f);
+                int dirtHeight = stoneHeight + 4 + PerlinNoise (x + xOffset, 100, z + zOffset, 25, 3, 1f);
 
                 // build the blocks
                 for (int y = 0; y < worldHeight; y++) {
-                    if (y < height)
+                    col.lightLevel [x, y, z] = CubeRenderHelper.MAX_LIGHT;
+                    if (y < stoneHeight)
                         col.blockID [x, y, z] = Block.STONE;
+                    else if (y < dirtHeight)
+                        col.blockID [x, y, z] = Block.DIRT;
                     else 
                         col.blockID [x, y, z] = Block.AIR;
                 }
@@ -34,6 +33,15 @@ public class TerrainGen
 
         // return the generated terrain column
         return col;
+    }
+
+    public static int PerlinNoise (int x, int y, int z, float scale, float height, float power)
+    {
+        float rValue = Noise.GetNoise (((double)x) / scale, ((double)y) / scale, ((double)z) / scale);
+        rValue *= height;
+        if (power != 0)
+            rValue = Mathf.Pow (rValue, power);
+        return (int)rValue;
     }
 }
 

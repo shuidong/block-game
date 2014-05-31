@@ -6,6 +6,7 @@ public abstract class Block
     // block ids
     public const ushort AIR = 0;
     public const ushort STONE = 1;
+    public const ushort DIRT = 3;
 
     // array of instances of all block types
     private static Block[] blocks;
@@ -16,6 +17,7 @@ public abstract class Block
         blocks = new Block[ushort.MaxValue + 1];
         blocks [AIR] = new BlockAir ();
         blocks [STONE] = new BlockStone ();
+        blocks [DIRT] = new BlockDirt ();
     }
 
     /** Get an instance of Block corresponding to the ID given */

@@ -18,10 +18,12 @@ public class World
     private Dictionary<Vector2i, Column> loadedData;
 
     // events
-    public delegate void ChunkLoadHandler(Vector2i pos);
-    public delegate void ChunkUnloadHandler(Vector2i pos);
+    public delegate void ChunkLoadHandler (Vector2i pos,MeshBuildInfo[] meshes);
+
+    public delegate void ChunkUnloadHandler (Vector2i pos);
+
     public event ChunkLoadHandler ChunkLoadEvent;
-    public event ChunkLoadHandler ChunkUnloadEvent;
+    public event ChunkUnloadHandler ChunkUnloadEvent;
 
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
     public World (string saveName, TerrainType worldType)
@@ -61,7 +63,11 @@ public class World
             // remove columns outside of range
             foreach (Vector2i pos in removal) {
                 loadedData.Remove (pos);
-                ChunkUnloadEvent(pos);
+            }
+
+            // call removal events
+            foreach (Vector2i pos in removal) {
+                ChunkUnloadEvent (pos);
             }
             
             // mark positions for addition
@@ -80,7 +86,11 @@ public class World
                 Column col = TerrainGen.Generate (worldType, pos);
                 // TODO update lighting
                 loadedData.Add (pos, col);
-                ChunkLoadEvent(pos);
+            }
+
+            // call addition events
+            foreach (Vector2i pos in addition) {
+                ChunkLoadEvent (pos, RenderColumn (pos));
             }
         }
     }
@@ -92,11 +102,32 @@ public class World
         int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
         int localY = worldY;
         int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
-        return GetBlockAt(colPos, localX, localY, localZ, def);
+        return GetBlockAt (colPos, localX, localY, localZ, def);
+    }
+
+    /** Return the block ID at the position (localX, localY, localZ) in the chunk at chunkPos. If the position is not currently loaded, return def */
+    public ushort GetBlockAt (Vector3i chunkPos, int localX, int localY, int localZ, ushort def)
+    {
+        Vector2i colPos = new Vector2i (chunkPos.x, chunkPos.z);
+        localY += chunkPos.y * WORLD_HEIGHT;
+        return GetBlockAt (colPos, localX, localY, localZ, def);
     }
 
     /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
-    public ushort GetBlockAt (Vector2i colPos, int localX, int localY, int localZ, ushort def) {
+    public ushort GetBlockAt (Vector2i colPos, int localX, int localY, int localZ, ushort def)
+    {
+        // if Y is out of bounds return the default
+        if (localY < 0 || localY >= WORLD_HEIGHT * CHUNK_SIZE)
+            return def;
+        
+        // if other coords are out of bounds find another chunk
+        if (localX < 0 || localZ < 0 || localX >= CHUNK_SIZE || localZ >= CHUNK_SIZE) {
+            int worldX = colPos.x * CHUNK_SIZE + localX;
+            int worldZ = colPos.z * CHUNK_SIZE + localZ;
+            return GetBlockAt (worldX, localY, worldZ, def);
+        }
+        
+        // return the block id at this column, or default
         lock (this) {
             Column col;
             if (loadedData.TryGetValue (colPos, out col)) {
@@ -109,18 +140,39 @@ public class World
         }
     }
 
-    /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
-    public byte GetBlockAt (int worldX, int worldY, int worldZ, byte def)
+    /** Return the light level at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
+    public byte GetLightAt (int worldX, int worldY, int worldZ, byte def)
     {
         Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);
         int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
         int localY = worldY;
         int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
-        return GetLightAt(colPos, localX, localY, localZ, def);
+        return GetLightAt (colPos, localX, localY, localZ, def);
+    }
+
+    /** Return the light level at the position (localX, localY, localZ) in the chunk at chunkPos. If the position is not currently loaded, return def */
+    public byte GetLightAt (Vector3i chunkPos, int localX, int localY, int localZ, byte def)
+    {
+        Vector2i colPos = new Vector2i (chunkPos.x, chunkPos.z);
+        localY += chunkPos.y * WORLD_HEIGHT;
+        return GetLightAt (colPos, localX, localY, localZ, def);
     }
 
     /** Return the light level at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
-    public byte GetLightAt (Vector2i colPos, int localX, int localY, int localZ, byte def) {
+    public byte GetLightAt (Vector2i colPos, int localX, int localY, int localZ, byte def)
+    {
+        // if Y is out of bounds return the default
+        if (localY < 0 || localY >= WORLD_HEIGHT * CHUNK_SIZE)
+            return def;
+
+        // if other coords are out of bounds find another chunk
+        if (localX < 0 || localZ < 0 || localX >= CHUNK_SIZE || localZ >= CHUNK_SIZE) {
+            int worldX = colPos.x * CHUNK_SIZE;
+            int worldZ = colPos.z * CHUNK_SIZE;
+            return GetLightAt (worldX, localY, worldZ, def);
+        }
+
+        // return the light level at this column, or default
         lock (this) {
             Column col;
             if (loadedData.TryGetValue (colPos, out col)) {
@@ -146,7 +198,7 @@ public class World
                 ushort oldBlock = col.blockID [localX, localY, localZ];
 
                 // let the old block do whatever it needs to
-                Block.GetInstance(oldBlock).OnBreak(this, worldX, worldY, worldZ, newBlock);
+                Block.GetInstance (oldBlock).OnBreak (this, worldX, worldY, worldZ, newBlock);
 
                 // set the block
                 col.blockID [localX, localY, localZ] = newBlock;
@@ -154,8 +206,37 @@ public class World
                 // TODO update lighting
 
                 // let the new block do whatever it needs to
-                Block.GetInstance(newBlock).OnPlace(this, worldX, worldY, worldZ, oldBlock);
+                Block.GetInstance (newBlock).OnPlace (this, worldX, worldY, worldZ, oldBlock);
             }
         }
+    }
+
+    /** Generate the mesh for a specified chunk */
+    public MeshBuildInfo RenderChunk (Vector3i pos)
+    {
+        MeshBuildInfo mesh = new MeshBuildInfo ();
+        for (int x = 0; x < CHUNK_SIZE; x++) {
+            for (int y = 0; y < CHUNK_SIZE; y++) {
+                for (int z = 0; z < CHUNK_SIZE; z++) {
+                    ushort block = GetBlockAt (pos, x, y, z, 0);
+                    IRenderBlock renderer = Block.GetInstance (block).Renderer;
+                    if (renderer != null)
+                        renderer.Render (mesh, this, pos, x, y, z);
+                }
+            }
+        }
+        mesh.Build ();
+        return mesh;
+    }
+
+    /** Generate the mesh for a specified column */
+    public MeshBuildInfo[] RenderColumn (Vector2i pos)
+    {
+        MeshBuildInfo[] meshes = new MeshBuildInfo[WORLD_HEIGHT];
+        for (int h = 0; h < WORLD_HEIGHT; h++) {
+            Vector3i chunkPos = new Vector3i (pos.x, h, pos.z);
+            meshes [h] = RenderChunk (chunkPos);
+        }
+        return meshes;
     }
 }
