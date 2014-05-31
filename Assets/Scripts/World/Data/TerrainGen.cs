@@ -23,8 +23,10 @@ public class TerrainGen
                     col.lightLevel [x, y, z] = CubeRenderHelper.MAX_LIGHT;
                     if (y < stoneHeight)
                         col.blockID [x, y, z] = Block.STONE;
-                    else if (y < dirtHeight)
+                    else if (y < dirtHeight - 1)
                         col.blockID [x, y, z] = Block.DIRT;
+                    else if (y == dirtHeight - 1)
+                        col.blockID [x, y, z] = Block.GRASS;
                     else 
                         col.blockID [x, y, z] = Block.AIR;
                 }
