@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Block
+public abstract class Block
 {
     // block ids
     public const ushort AIR = 0;
@@ -33,6 +33,11 @@ public class Block
         get {
             return true;
         }
+    }
+
+    /** How to render this block */
+    public abstract IRenderBlock Renderer {
+        get;
     }
 
     /*

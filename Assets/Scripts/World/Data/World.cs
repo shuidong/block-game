@@ -17,13 +17,19 @@ public class World
     // currently loaded world
     private Dictionary<Vector2i, Column> loadedData;
 
+    // events
+    public delegate void ChunkLoadHandler(Vector2i pos);
+    public delegate void ChunkUnloadHandler(Vector2i pos);
+    public event ChunkLoadHandler ChunkLoadEvent;
+    public event ChunkLoadHandler ChunkUnloadEvent;
+
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
-    public World (string name, TerrainType worldType)
+    public World (string saveName, TerrainType worldType)
     {
         // init fields
-        this.saveName = name;
-        this.saveDir = Application.persistentDataPath + "saves/" + saveName + "/" + worldType + "/";
+        this.saveName = saveName;
         this.worldType = worldType;
+        this.saveDir = Application.persistentDataPath + "/saves/" + this.saveName + "/" + this.worldType + "/";
 
         // create save dir
         Debug.Log ("Creating new " + this.worldType + ":\n\t-> " + saveDir);
@@ -55,6 +61,7 @@ public class World
             // remove columns outside of range
             foreach (Vector2i pos in removal) {
                 loadedData.Remove (pos);
+                ChunkUnloadEvent(pos);
             }
             
             // mark positions for addition
@@ -73,21 +80,26 @@ public class World
                 Column col = TerrainGen.Generate (worldType, pos);
                 // TODO update lighting
                 loadedData.Add (pos, col);
+                ChunkLoadEvent(pos);
             }
         }
     }
 
-    /** Return the block ID at the position (x, y, z). If the position is not currently loaded, return def */
+    /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
     public ushort GetBlockAt (int worldX, int worldY, int worldZ, ushort def)
     {
+        Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);
+        int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
+        int localY = worldY;
+        int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
+        return GetBlockAt(colPos, localX, localY, localZ, def);
+    }
+
+    /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
+    public ushort GetBlockAt (Vector2i colPos, int localX, int localY, int localZ, ushort def) {
         lock (this) {
-            Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);
             Column col;
             if (loadedData.TryGetValue (colPos, out col)) {
-                int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
-                int localY = worldY;
-                int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
-
                 // return the block
                 return col.blockID [localX, localY, localZ];
             } else {
@@ -97,8 +109,32 @@ public class World
         }
     }
 
+    /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
+    public byte GetBlockAt (int worldX, int worldY, int worldZ, byte def)
+    {
+        Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);
+        int localX = MiscMath.Mod (worldX, CHUNK_SIZE);
+        int localY = worldY;
+        int localZ = MiscMath.Mod (worldZ, CHUNK_SIZE);
+        return GetLightAt(colPos, localX, localY, localZ, def);
+    }
+
+    /** Return the light level at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
+    public byte GetLightAt (Vector2i colPos, int localX, int localY, int localZ, byte def) {
+        lock (this) {
+            Column col;
+            if (loadedData.TryGetValue (colPos, out col)) {
+                // return the block
+                return col.lightLevel [localX, localY, localZ];
+            } else {
+                // not found ):
+                return def;
+            }
+        }
+    }
+
     /** Set the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, do nothing */
-    public ushort SetBlockAt (int worldX, int worldY, int worldZ, ushort newBlock)
+    public void SetBlockAt (int worldX, int worldY, int worldZ, ushort newBlock)
     {
         lock (this) {
             Vector2i colPos = MiscMath.WorldToColumnCoords (worldX, worldZ);

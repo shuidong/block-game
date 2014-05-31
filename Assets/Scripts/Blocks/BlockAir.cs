@@ -4,7 +4,13 @@ using System.Collections;
 public class BlockAir : Block {
     public override bool Opaque {
         get {
-            return true;
+            return false;
+        }
+    }
+
+    public override IRenderBlock Renderer {
+        get {
+            return null;
         }
     }
 }
