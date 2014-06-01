@@ -44,6 +44,13 @@ public abstract class Block
         get;
     }
 
+    /** The collision bounding box for this block */
+    public virtual Bounds CollisionBounds {
+        get {
+            return new Bounds(Vector3.zero, Vector3.one);
+        }
+    }
+
     /*
      * Block Events
      */

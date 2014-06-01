@@ -11,7 +11,7 @@ public class CubeRenderHelper
     static CubeRenderHelper ()
     {
         lightColors = new Color[MAX_LIGHT + 1];
-        Color light = new Color (1 / 2f, 1 / 2f, 1 / 2f);
+        Color light = Color.white;
         for (int i = MAX_LIGHT; i >= 0; i--) {
             lightColors [i] = light;
             light *= .85f;

@@ -10,9 +10,12 @@ public class WorldController : MonoBehaviour
     public TerrainType worldType = TerrainType.MAINWORLD;
     public GameObject chunkPrefab;
 
+    void Awake() {
+        world = new World (saveName, worldType);
+    }
+
     void Start ()
     {
-        world = new World (saveName, worldType);
         world.ChunkLoadEvent += ChunkLoad;
         world.LoadInRange (new Vector2i (-3, -3), new Vector2i (3, 3));
     }
