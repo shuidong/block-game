@@ -167,8 +167,8 @@ public class World
 
         // if other coords are out of bounds find another chunk
         if (localX < 0 || localZ < 0 || localX >= CHUNK_SIZE || localZ >= CHUNK_SIZE) {
-            int worldX = colPos.x * CHUNK_SIZE;
-            int worldZ = colPos.z * CHUNK_SIZE;
+            int worldX = colPos.x * CHUNK_SIZE + localX;
+            int worldZ = colPos.z * CHUNK_SIZE + localZ;
             return GetLightAt (worldX, localY, worldZ, def);
         }
 

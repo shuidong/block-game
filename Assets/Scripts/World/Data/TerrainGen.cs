@@ -20,7 +20,6 @@ public class TerrainGen
 
                 // build the blocks
                 for (int y = 0; y < worldHeight; y++) {
-                    col.lightLevel [x, y, z] = CubeRenderHelper.MAX_LIGHT;
                     if (y < stoneHeight)
                         col.blockID [x, y, z] = Block.STONE;
                     else if (y < dirtHeight - 1)
@@ -33,8 +32,29 @@ public class TerrainGen
             }
         }
 
+        Sunlight(col);
+
         // return the generated terrain column
         return col;
+    }
+
+    private static void Sunlight (Column col)
+    {
+        byte maxLight = CubeRenderHelper.MAX_LIGHT;
+        int yMax = World.WORLD_HEIGHT * World.CHUNK_SIZE - 1;
+        
+        // beam sunlight downwards
+        for (int bX=0; bX<World.CHUNK_SIZE; bX++) {
+            for (int bZ=0; bZ<World.CHUNK_SIZE; bZ++) {
+                for (int y = yMax; y >= 0; y--) {
+                    if (Block.GetInstance(col.blockID [bX, y, bZ]).Opaque) {
+                        break;
+                    } else {
+                        col.lightLevel [bX, y, bZ] = maxLight;
+                    }
+                }
+            }
+        }
     }
 
     public static int PerlinNoise (int x, int y, int z, float scale, float height, float power)
