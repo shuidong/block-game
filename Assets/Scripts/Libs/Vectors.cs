@@ -23,6 +23,16 @@ public struct Vector2i : System.IEquatable<Vector2i>
     {
         return other.x == x && other.z == z;
     }
+
+    public static Vector2i operator + (Vector2i a, Vector2i b)
+    {
+        return new Vector2i (a.x + b.x, a.z + b.z);
+    }
+
+    public static Vector2i operator - (Vector2i a, Vector2i b)
+    {
+        return new Vector2i (a.x - b.x, a.z - b.z);
+    }
 }
 
 [System.Serializable]
@@ -48,5 +58,15 @@ public struct Vector3i : System.IEquatable<Vector3i>
     public bool Equals (Vector3i other)
     {
         return other.x == x && other.y == y && other.z == z;
+    }
+
+    public static Vector3i operator + (Vector3i a, Vector3i b)
+    {
+        return new Vector3i (a.x + b.x, a.y + b.y, a.z + b.z);
+    }
+    
+    public static Vector3i operator - (Vector3i a, Vector3i b)
+    {
+        return new Vector3i (a.x - b.x, a.y - b.y, a.z - b.z);
     }
 }

@@ -2,12 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 public class World
 {
     // global world constants
-    public const int CHUNK_SIZE = 12;
-    public const int WORLD_HEIGHT = 12;
+    public const int CHUNK_SIZE = 15;
+    public const int WORLD_HEIGHT = 10;
 
     // basic world info
     private string saveName;
@@ -17,13 +18,9 @@ public class World
     // currently loaded world
     private Dictionary<Vector2i, Column> loadedData;
 
-    // events
-    public delegate void ChunkLoadHandler (Vector2i pos,MeshBuildInfo[] meshes);
-
-    public delegate void ChunkUnloadHandler (Vector2i pos);
-
-    public event ChunkLoadHandler ChunkLoadEvent;
-    public event ChunkUnloadHandler ChunkUnloadEvent;
+    // thread communication
+    private List<ChunkLoadTask> loadQueue = new List<ChunkLoadTask> ();
+    private List<ChunkUnloadTask> unloadQueue = new List<ChunkUnloadTask> ();
 
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
     public World (string saveName, TerrainType worldType)
@@ -44,54 +41,63 @@ public class World
     /** Given a rectangle with corners 'min' and 'max', load all the chunks within the rectangle and unload all the chunks not within the rectangle */
     public void LoadInRange (Vector2i min, Vector2i max)
     {
-        lock (this) {
-            // helper variables
-            int xMin = min.x;
-            int zMin = min.z;
-            int xMax = max.x;
-            int zMax = max.z;
-            List<Vector2i> removal = new List<Vector2i> ();
-            List<Vector2i> addition = new List<Vector2i> ();
+        // helper variables
+        int xMin = min.x;
+        int zMin = min.z;
+        int xMax = max.x;
+        int zMax = max.z;
+        List<Vector2i> removal = new List<Vector2i> ();
+        List<Vector2i> addition = new List<Vector2i> ();
             
-            // mark positions for removal
-            foreach (Vector2i pos in loadedData.Keys) {
-                if (pos.x < xMin || pos.z < zMin || pos.x > xMax || pos.z > zMax) {
-                    removal.Add (pos);
-                }
+        // mark positions for removal
+        foreach (Vector2i pos in loadedData.Keys) {
+            if (pos.x < xMin || pos.z < zMin || pos.x > xMax || pos.z > zMax) {
+                removal.Add (pos);
             }
+        }
             
-            // remove columns outside of range
-            foreach (Vector2i pos in removal) {
+        // remove columns outside of range
+        foreach (Vector2i pos in removal) {
+            lock (this)
                 loadedData.Remove (pos);
-            }
+        }
 
-            // call removal events
-            foreach (Vector2i pos in removal) {
-                ChunkUnloadEvent (pos);
-            }
+        // call removal events
+        foreach (Vector2i pos in removal) {
+            ChunkUnloadTask task = new ChunkUnloadTask (pos);
+            lock (unloadQueue)
+                unloadQueue.Add (task);
+        }
             
-            // mark positions for addition
-            for (int x = xMin; x <= xMax; x++) {
-                for (int z = zMin; z <= zMax; z++) {
-                    Vector2i pos = new Vector2i (x, z);
+        // mark positions for addition
+        for (int x = xMin; x <= xMax; x++) {
+            for (int z = zMin; z <= zMax; z++) {
+                Vector2i pos = new Vector2i (x, z);
+                lock (this) {
                     if (!loadedData.ContainsKey (pos)) {
                         addition.Add (pos);
                     }
                 }
             }
+        }
             
-            // add columns within range
-            foreach (Vector2i pos in addition) {
+        // add columns within range
+        foreach (Vector2i pos in addition) {
+            Thread.Sleep(1);
+            lock (this) {
                 // TODO load from file if available
                 Column col = TerrainGen.Generate (worldType, pos);
                 // TODO update lighting
                 loadedData.Add (pos, col);
             }
+        }
 
-            // call addition events
-            foreach (Vector2i pos in addition) {
-                ChunkLoadEvent (pos, RenderColumn (pos));
-            }
+        // call addition events
+        foreach (Vector2i pos in addition) {
+            ChunkLoadTask task;
+            task = new ChunkLoadTask (pos, RenderColumn (pos));
+            lock (loadQueue)
+                loadQueue.Add (task);
         }
     }
 
@@ -109,7 +115,7 @@ public class World
     public ushort GetBlockAt (Vector3i chunkPos, int localX, int localY, int localZ, ushort def)
     {
         Vector2i colPos = new Vector2i (chunkPos.x, chunkPos.z);
-        localY += chunkPos.y * WORLD_HEIGHT;
+        localY += chunkPos.y * CHUNK_SIZE;
         return GetBlockAt (colPos, localX, localY, localZ, def);
     }
 
@@ -154,7 +160,7 @@ public class World
     public byte GetLightAt (Vector3i chunkPos, int localX, int localY, int localZ, byte def)
     {
         Vector2i colPos = new Vector2i (chunkPos.x, chunkPos.z);
-        localY += chunkPos.y * WORLD_HEIGHT;
+        localY += chunkPos.y * CHUNK_SIZE;
         return GetLightAt (colPos, localX, localY, localZ, def);
     }
 
@@ -234,9 +240,60 @@ public class World
     {
         MeshBuildInfo[] meshes = new MeshBuildInfo[WORLD_HEIGHT];
         for (int h = 0; h < WORLD_HEIGHT; h++) {
+            Thread.Sleep(1);
             Vector3i chunkPos = new Vector3i (pos.x, h, pos.z);
-            meshes [h] = RenderChunk (chunkPos);
+            lock(this) meshes [h] = RenderChunk (chunkPos);
         }
         return meshes;
+    }
+
+    /** Return the next chunk that should be loaded */
+    public ChunkLoadTask GetNextLoadChunk ()
+    {
+        lock (loadQueue) {
+            if (loadQueue.Count > 0) {
+                ChunkLoadTask result = loadQueue [0];
+                loadQueue.RemoveAt (0);
+                return result;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /** Return the next chunk that should be unloaded */
+    public ChunkUnloadTask GetNextUnloadChunk ()
+    {
+        lock (unloadQueue) {
+            if (unloadQueue.Count > 0) {
+                ChunkUnloadTask result = unloadQueue [0];
+                unloadQueue.RemoveAt (0);
+                return result;
+            } else {
+                return null;
+            }
+        }
+    }
+}
+
+public class ChunkLoadTask
+{
+    public Vector2i pos;
+    public MeshBuildInfo[] meshes;
+
+    public ChunkLoadTask (Vector2i pos, MeshBuildInfo[] meshes)
+    {
+        this.pos = pos;
+        this.meshes = meshes;
+    }
+}
+
+public class ChunkUnloadTask
+{
+    public Vector2i pos;
+    
+    public ChunkUnloadTask (Vector2i pos)
+    {
+        this.pos = pos;
     }
 }

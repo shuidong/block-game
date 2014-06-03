@@ -8,12 +8,14 @@ public static class MiscMath
         return ((k %= n) < 0) ? k + n : k;
     }
 
-    public static Vector2i WorldToColumnCoords (int x, int z)
+    public static Vector2i WorldToColumnCoords (float x, float z)
     {
-        Vector2i loc = new Vector2i (x / World.CHUNK_SIZE, z / World.CHUNK_SIZE);
-        if (x < 0 && x % World.CHUNK_SIZE != 0)
+        int iX = Mathf.RoundToInt (x);
+        int iZ = Mathf.RoundToInt (z);
+        Vector2i loc = new Vector2i (iX / World.CHUNK_SIZE, iZ / World.CHUNK_SIZE);
+        if (iX < 0 && iX % World.CHUNK_SIZE != 0)
             loc.x--;
-        if (z < 0 && z % World.CHUNK_SIZE != 0)
+        if (iZ < 0 && iZ % World.CHUNK_SIZE != 0)
             loc.z--;
         return loc;
     }
