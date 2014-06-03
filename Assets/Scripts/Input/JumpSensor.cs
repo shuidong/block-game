@@ -12,10 +12,6 @@ public class JumpSensor : MonoBehaviour {
 		triggered = true;
 	}
 
-	void LateUpdate() {
-		triggered = false;
-	}
-
 	void OnTriggerExit(Collider other) {
 		triggered = false;
 	}
