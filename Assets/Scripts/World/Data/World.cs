@@ -243,15 +243,25 @@ public class World
         }
     }
 
+    /** Get the maximum height of the specified column */
+    public int GetMaxHeightAt (Vector2i pos)
+    {
+        lock (this) {
+            return loadedData [pos].maxHeight;
+        }
+    }
+
     /** Generate the mesh for a specified chunk */
     public MeshBuildInfo RenderChunk (Vector3i pos)
     {
         MeshBuildInfo mesh = new MeshBuildInfo ();
+        ushort block;
+        IRenderBlock renderer;
         for (int x = 0; x < CHUNK_SIZE; x++) {
             for (int y = 0; y < CHUNK_SIZE; y++) {
                 for (int z = 0; z < CHUNK_SIZE; z++) {
-                    ushort block = GetBlockAt (pos, x, y, z, 0);
-                    IRenderBlock renderer = Block.GetInstance (block).renderer;
+                    block = GetBlockAt (pos, x, y, z, 0);
+                    renderer = Block.GetInstance (block).renderer;
                     if (renderer != null)
                         renderer.Render (mesh, this, pos, x, y, z);
                 }
@@ -266,10 +276,19 @@ public class World
     {
         MeshBuildInfo[] meshes = new MeshBuildInfo[WORLD_HEIGHT];
         for (int h = 0; h < WORLD_HEIGHT; h++) {
-            if(h % WORLD_HEIGHT/4 == 0) Thread.Sleep (1);
+            if (h % WORLD_HEIGHT / 4 == 0)
+                Thread.Sleep (1);
             Vector3i chunkPos = new Vector3i (pos.x, h, pos.z);
-            lock (this)
-                meshes [h] = RenderChunk (chunkPos);
+
+            if (h * CHUNK_SIZE > GetMaxHeightAt (pos)) {
+                // don't render if we're past the max height
+                meshes [h] = new MeshBuildInfo ();
+                meshes [h].Build ();
+            } else {
+                // render this chunk
+                lock (this)
+                    meshes [h] = RenderChunk (chunkPos);
+            }
         }
         return meshes;
     }

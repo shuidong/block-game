@@ -23,10 +23,12 @@ public class RenderFullBlock : IRenderBlock
         
         Color blockColor = color;
 
+        int xx, yy, zz;
+
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y + 1, z, def)).opaque) {
             if (smooth) {
-                for (int zz = -1; zz <= 1; zz++) {
-                    for (int xx = -1; xx <= 1; xx++) {
+                for ( zz = -1; zz <= 1; zz++) {
+                    for ( xx = -1; xx <= 1; xx++) {
                         l [3 * (zz + 1) + (xx + 1)] = world.GetLightAt (chunkPos, xx + x, y + 1, -zz + z, 0);
                     }
                 }
@@ -38,8 +40,8 @@ public class RenderFullBlock : IRenderBlock
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y - 1, z, def)).opaque) {
             if (smooth) {
-                for (int zz = -1; zz <= 1; zz++) {
-                    for (int xx = -1; xx <= 1; xx++) {
+                for ( zz = -1; zz <= 1; zz++) {
+                    for ( xx = -1; xx <= 1; xx++) {
                         l [3 * (zz + 1) + (xx + 1)] = world.GetLightAt (chunkPos, xx + x, y - 1, -zz + z, 0);
                     }
                 }
@@ -51,8 +53,8 @@ public class RenderFullBlock : IRenderBlock
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x + 1, y, z, def)).opaque) {
             if (smooth) {
-                for (int zz = -1; zz <= 1; zz++) {
-                    for (int yy = -1; yy <= 1; yy++) {
+                for ( zz = -1; zz <= 1; zz++) {
+                    for ( yy = -1; yy <= 1; yy++) {
                         l [3 * (zz + 1) + (yy + 1)] = world.GetLightAt (chunkPos, x + 1, yy + y, -zz + z, 0);
                     }
                 }
@@ -64,8 +66,8 @@ public class RenderFullBlock : IRenderBlock
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x - 1, y, z, def)).opaque) {
             if (smooth) {
-                for (int zz = -1; zz <= 1; zz++) {
-                    for (int yy = -1; yy <= 1; yy++) {
+                for ( zz = -1; zz <= 1; zz++) {
+                    for ( yy = -1; yy <= 1; yy++) {
                         l [3 * (zz + 1) + (yy + 1)] = world.GetLightAt (chunkPos, x - 1, yy + y, -zz + z, 0);
                     }
                 }
@@ -77,8 +79,8 @@ public class RenderFullBlock : IRenderBlock
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z + 1, def)).opaque) {
             if (smooth) {
-                for (int yy = -1; yy <= 1; yy++) {
-                    for (int xx = -1; xx <= 1; xx++) {
+                for ( yy = -1; yy <= 1; yy++) {
+                    for ( xx = -1; xx <= 1; xx++) {
                         l [3 * (yy + 1) + (xx + 1)] = world.GetLightAt (chunkPos, xx + x, -yy + y, z + 1, 0);
                     }
                 }
@@ -90,8 +92,8 @@ public class RenderFullBlock : IRenderBlock
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z - 1, def)).opaque) {
             if (smooth) {
-                for (int yy = -1; yy <= 1; yy++) {
-                    for (int xx = -1; xx <= 1; xx++) {
+                for ( yy = -1; yy <= 1; yy++) {
+                    for ( xx = -1; xx <= 1; xx++) {
                         l [3 * (yy + 1) + (xx + 1)] = world.GetLightAt (chunkPos, xx + x, -yy + y, z - 1, 0);
                     }
                 }

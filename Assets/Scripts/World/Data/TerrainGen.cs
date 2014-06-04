@@ -22,13 +22,17 @@ public class TerrainGen
                 for (int y = 0; y < worldHeight; y++) {
                     if (y < stoneHeight)
                         col.blockID [x, y, z] = Block.STONE;
-                    else if (y < dirtHeight - 1)
+                    else if (y < dirtHeight)
                         col.blockID [x, y, z] = Block.DIRT;
-                    else if (y == dirtHeight - 1)
+                    else if (y == dirtHeight)
                         col.blockID [x, y, z] = Block.GRASS;
                     else 
                         col.blockID [x, y, z] = Block.AIR;
                 }
+
+                // cache the max height of this column
+                if (dirtHeight > col.maxHeight)
+                    col.maxHeight = dirtHeight;
             }
         }
 
