@@ -47,7 +47,7 @@ public class TerrainGen
         for (int bX=0; bX<World.CHUNK_SIZE; bX++) {
             for (int bZ=0; bZ<World.CHUNK_SIZE; bZ++) {
                 for (int y = yMax; y >= 0; y--) {
-                    if (Block.GetInstance(col.blockID [bX, y, bZ]).Opaque) {
+                    if (Block.GetInstance(col.blockID [bX, y, bZ]).opaque) {
                         break;
                     } else {
                         col.lightLevel [bX, y, bZ] = maxLight;

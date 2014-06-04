@@ -19,8 +19,9 @@ public class World
     private Dictionary<Vector2i, Column> loadedData;
 
     // thread communication
-    private List<ChunkLoadTask> loadQueue = new List<ChunkLoadTask> ();
-    private List<ChunkUnloadTask> unloadQueue = new List<ChunkUnloadTask> ();
+    private List<ColumnLoadTask> loadQueue = new List<ColumnLoadTask> ();
+    private List<ColumnUnloadTask> unloadQueue = new List<ColumnUnloadTask> ();
+    private List<ChunkRenderTask> renderQueue = new List<ChunkRenderTask> ();
 
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
     public World (string saveName, TerrainType worldType)
@@ -41,6 +42,9 @@ public class World
     /** Given a rectangle with corners 'min' and 'max', load all the chunks within the rectangle and unload all the chunks not within the rectangle */
     public void LoadInRange (Vector2i min, Vector2i max)
     {
+        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch ();
+        watch.Start ();
+
         // helper variables
         int xMin = min.x;
         int zMin = min.z;
@@ -64,7 +68,7 @@ public class World
 
         // call removal events
         foreach (Vector2i pos in removal) {
-            ChunkUnloadTask task = new ChunkUnloadTask (pos);
+            ColumnUnloadTask task = new ColumnUnloadTask (pos);
             lock (unloadQueue)
                 unloadQueue.Add (task);
         }
@@ -83,22 +87,44 @@ public class World
             
         // add columns within range
         foreach (Vector2i pos in addition) {
-            Thread.Sleep(1);
             lock (this) {
                 // TODO load from file if available
+
+                // generate terrain
                 Column col = TerrainGen.Generate (worldType, pos);
-                // TODO update lighting
+
+                // add to loaded world
                 loadedData.Add (pos, col);
+            }
+
+            // notify main thread
+            ColumnLoadTask loadTask = new ColumnLoadTask (pos, RenderColumn (pos));
+            lock (loadQueue)
+                loadQueue.Add (loadTask);
+
+            // rerender neighbors
+            for (int x = pos.x-1; x <= pos.x+1; x++) {
+                for (int z = pos.z-1; z <= pos.z+1; z++) {
+                    Vector2i pos2i = new Vector2i (x, z);
+                    bool containsKey;
+                    lock (this)
+                        containsKey = loadedData.ContainsKey (pos2i);
+                    if ((x != pos.x ^ z != pos.z) && containsKey) {
+                        MeshBuildInfo[] meshes = RenderColumn (pos2i);
+                        for (int h = 0; h < WORLD_HEIGHT; h++) {
+                            ChunkRenderTask renderTask = new ChunkRenderTask (new Vector3i (x, h, z), meshes [h]);
+                            lock (renderQueue)
+                                renderQueue.Add (renderTask);
+                        }
+                    }
+                }
             }
         }
 
-        // call addition events
-        foreach (Vector2i pos in addition) {
-            ChunkLoadTask task;
-            task = new ChunkLoadTask (pos, RenderColumn (pos));
-            lock (loadQueue)
-                loadQueue.Add (task);
-        }
+        addition.Clear ();
+
+        watch.Stop ();
+        Debug.Log ("Load time: " + watch.ElapsedMilliseconds / 1000f + "s");
     }
 
     /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
@@ -225,7 +251,7 @@ public class World
             for (int y = 0; y < CHUNK_SIZE; y++) {
                 for (int z = 0; z < CHUNK_SIZE; z++) {
                     ushort block = GetBlockAt (pos, x, y, z, 0);
-                    IRenderBlock renderer = Block.GetInstance (block).Renderer;
+                    IRenderBlock renderer = Block.GetInstance (block).renderer;
                     if (renderer != null)
                         renderer.Render (mesh, this, pos, x, y, z);
                 }
@@ -240,19 +266,20 @@ public class World
     {
         MeshBuildInfo[] meshes = new MeshBuildInfo[WORLD_HEIGHT];
         for (int h = 0; h < WORLD_HEIGHT; h++) {
-            Thread.Sleep(1);
+            if(h % WORLD_HEIGHT/4 == 0) Thread.Sleep (1);
             Vector3i chunkPos = new Vector3i (pos.x, h, pos.z);
-            lock(this) meshes [h] = RenderChunk (chunkPos);
+            lock (this)
+                meshes [h] = RenderChunk (chunkPos);
         }
         return meshes;
     }
 
-    /** Return the next chunk that should be loaded */
-    public ChunkLoadTask GetNextLoadChunk ()
+    /** Return the next column that should be loaded */
+    public ColumnLoadTask GetNextLoadColumn ()
     {
         lock (loadQueue) {
             if (loadQueue.Count > 0) {
-                ChunkLoadTask result = loadQueue [0];
+                ColumnLoadTask result = loadQueue [0];
                 loadQueue.RemoveAt (0);
                 return result;
             } else {
@@ -261,13 +288,27 @@ public class World
         }
     }
 
-    /** Return the next chunk that should be unloaded */
-    public ChunkUnloadTask GetNextUnloadChunk ()
+    /** Return the next column that should be unloaded */
+    public ColumnUnloadTask GetNextUnloadColumn ()
     {
         lock (unloadQueue) {
             if (unloadQueue.Count > 0) {
-                ChunkUnloadTask result = unloadQueue [0];
+                ColumnUnloadTask result = unloadQueue [0];
                 unloadQueue.RemoveAt (0);
+                return result;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /** Return the next column that should be rendered */
+    public ChunkRenderTask GetNextRenderChunk ()
+    {
+        lock (renderQueue) {
+            if (renderQueue.Count > 0) {
+                ChunkRenderTask result = renderQueue [0];
+                renderQueue.RemoveAt (0);
                 return result;
             } else {
                 return null;
@@ -276,24 +317,36 @@ public class World
     }
 }
 
-public class ChunkLoadTask
+public class ColumnLoadTask
 {
     public Vector2i pos;
     public MeshBuildInfo[] meshes;
 
-    public ChunkLoadTask (Vector2i pos, MeshBuildInfo[] meshes)
+    public ColumnLoadTask (Vector2i pos, MeshBuildInfo[] meshes)
     {
         this.pos = pos;
         this.meshes = meshes;
     }
 }
 
-public class ChunkUnloadTask
+public class ColumnUnloadTask
 {
     public Vector2i pos;
     
-    public ChunkUnloadTask (Vector2i pos)
+    public ColumnUnloadTask (Vector2i pos)
     {
         this.pos = pos;
+    }
+}
+
+public class ChunkRenderTask
+{
+    public Vector3i pos;
+    public MeshBuildInfo mesh;
+    
+    public ChunkRenderTask (Vector3i pos, MeshBuildInfo mesh)
+    {
+        this.pos = pos;
+        this.mesh = mesh;
     }
 }

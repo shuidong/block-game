@@ -14,6 +14,7 @@ public class WorldController : MonoBehaviour
     // editor params
     public string saveName = "World 1";
     public TerrainType worldType = TerrainType.MAINWORLD;
+    public int loadDistance = 8;
     public GameObject chunkPrefab;
 
     // instantiated chunks
@@ -36,23 +37,38 @@ public class WorldController : MonoBehaviour
         lock (playerPosLock)
             playerPos = player.position;
         Thread t = new Thread (new ThreadStart (LoadChunksAroundPlayer));
-        t.Priority = System.Threading.ThreadPriority.Lowest;
-        t.Start();
+        t.Start ();
     }
 
     void FixedUpdate ()
     {
+        // update cached player position
         lock (playerPosLock)
             playerPos = player.position;
 
-        ChunkUnloadTask unload = world.GetNextUnloadChunk ();
-        if (unload != null)
-            DestroyChunk (unload.pos);
-        else {
-            ChunkLoadTask load = world.GetNextLoadChunk ();
+        // unload far chunks
+        ColumnUnloadTask unload;
+        do {
+            unload = world.GetNextUnloadColumn ();
+            if (unload != null)
+                DestroyChunk (unload.pos);
+        } while (unload != null);
+
+        // load near chunks
+        ColumnLoadTask load;
+        do {
+            load = world.GetNextLoadColumn ();
             if (load != null)
                 InstantiateChunk (load.pos, load.meshes);
-        }
+        } while (load != null);
+
+        // update modified chunks
+        ChunkRenderTask render;
+        do {
+            render = world.GetNextRenderChunk();
+            if(render != null && instances.ContainsKey(render.pos))
+                UpdateMesh(instances[render.pos], render.mesh);
+        } while (render != null);
     }
 
     void LoadChunksAroundPlayer ()
@@ -62,7 +78,7 @@ public class WorldController : MonoBehaviour
                 Vector2i center;
                 lock (playerPosLock)
                     center = MiscMath.WorldToColumnCoords (playerPos.x, playerPos.z);
-                Vector2i offset = new Vector2i (2, 2);
+                Vector2i offset = new Vector2i (loadDistance, loadDistance);
                 Vector2i min = center - offset;
                 Vector2i max = center + offset;
                 world.LoadInRange (min, max);
@@ -89,24 +105,27 @@ public class WorldController : MonoBehaviour
             instances.Add(new Vector3i(pos.x, y, pos.z), obj.GetComponent<ChunkRenderer>());
             obj.transform.parent = transform;
             obj.name = System.String.Format ("Chunk ({0}, {1}, {2})", pos.x, y, pos.z);
-
-            // set mesh for the chunk
-            Mesh mesh = obj.GetComponent<MeshFilter> ().mesh;
-            mesh.Clear ();
-            mesh.vertices = meshes [y].verticesArray;
-            mesh.uv = meshes [y].uvArray;
-            mesh.triangles = meshes [y].trianglesArray;
-            mesh.colors = meshes [y].colorsArray;
-            mesh.Optimize ();
-            mesh.RecalculateNormals ();
+            UpdateMesh(obj.GetComponent<ChunkRenderer>(), meshes[y]);
         }
     }
 
+    void UpdateMesh (ChunkRenderer obj, MeshBuildInfo build) {
+        Mesh mesh = obj.GetComponent<MeshFilter> ().mesh;
+        mesh.Clear ();
+        mesh.vertices = build.verticesArray;
+        mesh.uv = build.uvArray;
+        mesh.triangles = build.trianglesArray;
+        mesh.colors = build.colorsArray;
+        mesh.Optimize ();
+        mesh.RecalculateNormals ();
+    }
+    
     void DestroyChunk(Vector2i pos)
     {
         for (int y = 0; y < World.WORLD_HEIGHT; y++) {
             Vector3i chunkPos = new Vector3i (pos.x, y, pos.z);
             Destroy(instances[chunkPos].gameObject);
+            instances.Remove(chunkPos);
         }
     }
 }

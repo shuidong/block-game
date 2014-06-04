@@ -17,13 +17,13 @@ public class RenderFullBlock : IRenderBlock
         bool smooth = true;
         Vector3 center = Vector3.one / 2f;
         Vector3 size = Vector3.one;
-        ushort def = Block.AIR;
+        ushort def = Block.STONE;
         
         byte[] l = new byte[9];
         
         Color blockColor = color;
 
-        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y + 1, z, def)).Opaque) {
+        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y + 1, z, def)).opaque) {
             if (smooth) {
                 for (int zz = -1; zz <= 1; zz++) {
                     for (int xx = -1; xx <= 1; xx++) {
@@ -36,7 +36,7 @@ public class RenderFullBlock : IRenderBlock
             CubeRenderHelper.CubeTop (current, x, y, z, layout, center, size, l, smooth, blockColor);
         }
         
-        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y - 1, z, def)).Opaque) {
+        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y - 1, z, def)).opaque) {
             if (smooth) {
                 for (int zz = -1; zz <= 1; zz++) {
                     for (int xx = -1; xx <= 1; xx++) {
@@ -49,7 +49,7 @@ public class RenderFullBlock : IRenderBlock
             CubeRenderHelper.CubeBottom (current, x, y, z, layout, center, size, l, smooth, blockColor);
         }
         
-        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x + 1, y, z, def)).Opaque) {
+        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x + 1, y, z, def)).opaque) {
             if (smooth) {
                 for (int zz = -1; zz <= 1; zz++) {
                     for (int yy = -1; yy <= 1; yy++) {
@@ -62,7 +62,7 @@ public class RenderFullBlock : IRenderBlock
             CubeRenderHelper.CubeEast (current, x, y, z, layout, center, size, l, smooth, blockColor);
         }
         
-        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x - 1, y, z, def)).Opaque) {
+        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x - 1, y, z, def)).opaque) {
             if (smooth) {
                 for (int zz = -1; zz <= 1; zz++) {
                     for (int yy = -1; yy <= 1; yy++) {
@@ -75,7 +75,7 @@ public class RenderFullBlock : IRenderBlock
             CubeRenderHelper.CubeWest (current, x, y, z, layout, center, size, l, smooth, blockColor);
         }
         
-        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z + 1, def)).Opaque) {
+        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z + 1, def)).opaque) {
             if (smooth) {
                 for (int yy = -1; yy <= 1; yy++) {
                     for (int xx = -1; xx <= 1; xx++) {
@@ -88,7 +88,7 @@ public class RenderFullBlock : IRenderBlock
             CubeRenderHelper.CubeNorth (current, x, y, z, layout, center, size, l, smooth, blockColor);
         }
         
-        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z - 1, def)).Opaque) {
+        if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z - 1, def)).opaque) {
             if (smooth) {
                 for (int yy = -1; yy <= 1; yy++) {
                     for (int xx = -1; xx <= 1; xx++) {

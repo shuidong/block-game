@@ -37,9 +37,9 @@ QualitySettings:
     Samsung TV: 2
     Standalone: 0
     Tizen: 2
-    WP8: 3
+    WP8: 0
     Web: 0
-    Windows Store Apps: 3
+    Windows Store Apps: 0
     XBOX360: 3
     XboxOne: 3
     iPhone: 0

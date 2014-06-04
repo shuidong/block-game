@@ -33,23 +33,13 @@ public abstract class Block
      */
 
     /** Does this block stop light? */
-    public virtual bool Opaque {
-        get {
-            return true;
-        }
-    }
+    public bool opaque = true;
 
     /** How to render this block */
-    public abstract IRenderBlock Renderer {
-        get;
-    }
+    public IRenderBlock renderer = null;
 
     /** The collision bounding box for this block */
-    public virtual Bounds CollisionBounds {
-        get {
-            return new Bounds(Vector3.zero, Vector3.one);
-        }
-    }
+    public Bounds collisionBounds = new Bounds(Vector3.zero, Vector3.one);
 
     /*
      * Block Events

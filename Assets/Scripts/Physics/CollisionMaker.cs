@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class CollisionMaker : MonoBehaviour {
@@ -22,9 +22,10 @@ public class CollisionMaker : MonoBehaviour {
 			}
 		}
 		UpdateColliders ();
+        StartCoroutine (UpdatePeriodically ());
 	}
 
-	void LateUpdate() {
+	void FixedUpdate() {
 		Vector3 oldPos = transform.position;
 
 		if (targetObject) {
@@ -37,6 +38,13 @@ public class CollisionMaker : MonoBehaviour {
 			}
 		}
 	}
+
+    IEnumerator UpdatePeriodically() {
+        while (true) {
+            yield return new WaitForSeconds(1);
+            UpdateColliders();
+        }
+    }
 
 	public void UpdateColliders() {
 		Vector3 myPos = transform.position;
@@ -53,9 +61,9 @@ public class CollisionMaker : MonoBehaviour {
                     ushort blockID = world.GetBlockAt(worldX, worldY, worldZ, Block.STONE);
 					BoxCollider boxCollider = points[x,y,z];
 					Block block = Block.GetInstance(blockID);
-					if(block.Opaque) {
+					if(block.opaque) {
 						boxCollider.enabled = true;
-						Bounds shape = block.CollisionBounds;
+						Bounds shape = block.collisionBounds;
 						boxCollider.center = boxOffset + shape.center;
 						boxCollider.size = shape.size;
 					} else if(boxCollider.enabled) {
@@ -65,17 +73,6 @@ public class CollisionMaker : MonoBehaviour {
 					}
 				}
 			}
-		}
-	}
-
-	void OnDrawGizmosSelected() {
-		if (points == null)
-			return;
-
-		Gizmos.color = Color.blue;
-		Vector3 pos = transform.position;
-		foreach (BoxCollider b in points) {
-			if(b.enabled) Gizmos.DrawWireCube(b.center + pos, b.size);
 		}
 	}
 }
