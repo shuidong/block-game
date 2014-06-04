@@ -104,13 +104,13 @@ public class World
         {
             lock (this)
             {
-                    // TODO load from file if available
+                // TODO load from file if available
 
-                    // generate terrain
-                    Column col = TerrainGen.Generate(worldType, pos);
+                // generate terrain
+                Column col = TerrainGen.Generate(worldType, pos);
 
-                    // add to loaded world
-                    loadedData.Add(pos, col);
+                // add to loaded world
+                loadedData.Add(pos, col);
             }
         }
 
@@ -130,7 +130,8 @@ public class World
             }
         }
 
-        foreach (Vector2i pos in render) {
+        foreach (Vector2i pos in render)
+        {
             // notify main thread
             if (pos.x >= xMin && pos.z >= zMin && pos.x <= xMax && pos.z <= zMax)
             {
@@ -284,6 +285,7 @@ public class World
         MeshBuildInfo mesh = new MeshBuildInfo();
         ushort block;
         IRenderBlock renderer;
+
         for (int x = 0; x < CHUNK_SIZE; x++)
         {
             for (int y = 0; y < CHUNK_SIZE; y++)
@@ -297,6 +299,7 @@ public class World
                 }
             }
         }
+
         mesh.Build();
         return mesh;
     }
@@ -307,8 +310,7 @@ public class World
         MeshBuildInfo[] meshes = new MeshBuildInfo[WORLD_HEIGHT];
         for (int h = 0; h < WORLD_HEIGHT; h++)
         {
-            if (h % WORLD_HEIGHT / 4 == 0)
-                Thread.Sleep(1);
+            Thread.Sleep(1);
             Vector3i chunkPos = new Vector3i(pos.x, h, pos.z);
 
             if (h * CHUNK_SIZE > GetMaxHeightAt(pos))
@@ -320,8 +322,7 @@ public class World
             else
             {
                 // render this chunk
-                lock (this)
-                    meshes[h] = RenderChunk(chunkPos);
+                meshes[h] = RenderChunk(chunkPos);
             }
         }
         return meshes;

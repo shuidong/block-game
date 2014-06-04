@@ -37,6 +37,7 @@ public class WorldController : MonoBehaviour
         lock (playerPosLock)
             playerPos = player.position;
         Thread t = new Thread (new ThreadStart (LoadChunksAroundPlayer));
+        t.Priority = System.Threading.ThreadPriority.Lowest;
         t.Start ();
     }
 
