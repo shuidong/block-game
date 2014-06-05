@@ -274,7 +274,7 @@ public class World
 
         // queue chunks for render
         List<Vector3i> positions = new List<Vector3i>();
-        for (int xx = -1; xx < 1; xx++)
+        for (int xx = -1; xx <= 1; xx++)
         {
             for (int yy = -1; yy <= 1; yy++)
             {
