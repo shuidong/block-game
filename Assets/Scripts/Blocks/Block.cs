@@ -41,6 +41,9 @@ public abstract class Block
     /** The collision bounding box for this block */
     public Bounds collisionBounds = new Bounds(Vector3.zero, Vector3.one);
 
+    /** The human readable display name for this block */
+    public string name = "No Name";
+
     /*
      * Block Events
      */
