@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class TerrainGen
@@ -20,14 +20,16 @@ public class TerrainGen
 
                 // build the blocks
                 for (int y = 0; y < worldHeight; y++) {
-                    if (y < stoneHeight)
-                        col.blockID [x, y, z] = Block.STONE;
+                    if (y == 0)
+                        col.blockID[x, y, z] = Block.BEDROCK;
+                    else if (y < stoneHeight)
+                        col.blockID[x, y, z] = Block.STONE;
                     else if (y < dirtHeight)
-                        col.blockID [x, y, z] = Block.DIRT;
+                        col.blockID[x, y, z] = Block.DIRT;
                     else if (y == dirtHeight)
-                        col.blockID [x, y, z] = Block.GRASS;
-                    else 
-                        col.blockID [x, y, z] = Block.AIR;
+                        col.blockID[x, y, z] = Block.GRASS;
+                    else
+                        col.blockID[x, y, z] = Block.AIR;
                 }
 
                 // cache the max height of this column

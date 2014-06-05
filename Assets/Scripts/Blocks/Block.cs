@@ -8,24 +8,26 @@ public abstract class Block
     public const ushort DIRT = 1;
     public const ushort GRASS = 2;
     public const ushort STONE = 3;
+    public const ushort BEDROCK = 4;
 
     // array of instances of all block types
     private static Block[] blocks;
 
     /** Instantiate all block types and store them in the array */
-    static Block ()
+    static Block()
     {
         blocks = new Block[ushort.MaxValue + 1];
-        blocks [AIR] = new BlockAir ();
-        blocks [DIRT] = new BlockDirt ();
-        blocks [GRASS] = new BlockGrass ();
+        blocks[AIR] = new BlockAir();
+        blocks[DIRT] = new BlockDirt();
+        blocks[GRASS] = new BlockGrass();
         blocks[STONE] = new BlockStone();
+        blocks[BEDROCK] = new BlockBedrock();
     }
 
     /** Get an instance of Block corresponding to the ID given */
-    public static Block GetInstance (ushort id)
+    public static Block GetInstance(ushort id)
     {
-        return blocks [id];
+        return blocks[id];
     }
 
     /*
@@ -44,17 +46,20 @@ public abstract class Block
     /** The human readable display name for this block */
     public string name = "No Name";
 
+    /** Is this block impossible to break by a player? */
+    public bool indestructable = false;
+
     /*
      * Block Events
      */
 
     /** Called when the block is replaced by another block or air */
-    public virtual void OnBreak (World world, int x, int y, int z, ushort newBlock)
+    public virtual void OnBreak(World world, int x, int y, int z, ushort newBlock)
     {
     }
 
     /** Called when the block replaces another block or air */
-    public virtual void OnPlace (World world, int x, int y, int z, ushort oldBlock)
+    public virtual void OnPlace(World world, int x, int y, int z, ushort oldBlock)
     {
     }
 }

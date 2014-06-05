@@ -47,8 +47,11 @@ public class PlayerLogic : MonoBehaviour
 
             if (InputProxy.GetButtonDown("Dig"))
             {
-                WorldInterface.ReplaceBlock(world, hit, Block.AIR);
-                GetComponent<CollideWithTerrain>().collisionMaker.UpdateColliders();
+                if (!Block.GetInstance(block).indestructable)
+                {
+                    WorldInterface.ReplaceBlock(world, hit, Block.AIR);
+                    GetComponent<CollideWithTerrain>().collisionMaker.UpdateColliders();
+                }
             }
 
             if (InputProxy.GetButtonDown("Use"))
