@@ -12,6 +12,9 @@ public class PlayerLogic : MonoBehaviour
     public float reach = 4;
     public ushort held = 1;
 
+    // capture cursor
+    public static bool lockCursor = true;
+
     void Start()
     {
         cameraObject = GameObject.FindGameObjectWithTag("MainCamera");
@@ -20,6 +23,16 @@ public class PlayerLogic : MonoBehaviour
 
     void Update()
     {
+        // capture cursor
+        if (Screen.lockCursor != lockCursor)
+        {
+            if (lockCursor && Input.GetMouseButton(0))
+                Screen.lockCursor = true;
+            else if (!lockCursor)
+                Screen.lockCursor = false;
+        }
+
+        // interact with the world
         Ray ray = new Ray(cameraObject.transform.position, cameraObject.transform.forward);
         RaycastHit hit;
 
