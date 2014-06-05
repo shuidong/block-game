@@ -17,7 +17,7 @@ public class RenderFullBlock : IRenderBlock
         bool smooth = true;
         Vector3 center = Vector3.one / 2f;
         Vector3 size = Vector3.one;
-        ushort def = Block.STONE;
+        ushort def = Block.DIRT;
         
         byte[] l = new byte[9];
         

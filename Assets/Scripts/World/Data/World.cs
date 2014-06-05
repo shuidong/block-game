@@ -300,7 +300,7 @@ public class World
                     {
                         FloodFillDark(worldX, h, worldZ);
                         h--;
-                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.STONE)).opaque);
+                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT)).opaque);
                 }
             }
             else
@@ -316,7 +316,7 @@ public class World
                     {
                         SetLightAt(worldX, h, worldZ, CubeRenderHelper.MAX_LIGHT);
                         h--;
-                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.STONE)).opaque);
+                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT)).opaque);
 
                     // flood
                     h = worldY;
@@ -324,7 +324,7 @@ public class World
                     {
                         FloodFillLight(worldX, h, worldZ, CubeRenderHelper.MAX_LIGHT, true);
                         h--;
-                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.STONE)).opaque);
+                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT)).opaque);
                 }
 
                 // let light from nearby blocks
@@ -473,7 +473,7 @@ public class World
             return;
 
         // get current status
-        ushort block = GetBlockAt(x, y, z, Block.STONE);
+        ushort block = GetBlockAt(x, y, z, Block.DIRT);
         byte light = GetLightAt(x, y, z, 0);
 
         // if opaque, stop spreading

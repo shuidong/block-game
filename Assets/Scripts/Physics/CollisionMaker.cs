@@ -58,7 +58,7 @@ public class CollisionMaker : MonoBehaviour {
                     int worldY = (int) boxPosition.y;
                     int worldZ = (int) boxPosition.z;
 
-                    ushort blockID = world.GetBlockAt(worldX, worldY, worldZ, Block.STONE);
+                    ushort blockID = world.GetBlockAt(worldX, worldY, worldZ, Block.DIRT);
 					BoxCollider boxCollider = points[x,y,z];
 					Block block = Block.GetInstance(blockID);
 					if(block.opaque) {

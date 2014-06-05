@@ -4,11 +4,11 @@ using System.Collections;
 public abstract class Block
 {
     // block ids
-    public const ushort AIR = 0;
-    public const ushort DIRT = 1;
-    public const ushort GRASS = 2;
-    public const ushort STONE = 3;
-    public const ushort BEDROCK = 4;
+    public static readonly ushort AIR = 0;
+    public static readonly ushort BEDROCK = 1;
+    public static readonly ushort DIRT = 2;
+    public static readonly ushort GRASS = 3;
+    public static readonly ushort[] STONE = { 4, 5, 6, 7, 8 };
 
     // array of instances of all block types
     private static Block[] blocks;
@@ -18,10 +18,11 @@ public abstract class Block
     {
         blocks = new Block[ushort.MaxValue + 1];
         blocks[AIR] = new BlockAir();
+        blocks[BEDROCK] = new BlockBedrock();
         blocks[DIRT] = new BlockDirt();
         blocks[GRASS] = new BlockGrass();
-        blocks[STONE] = new BlockStone();
-        blocks[BEDROCK] = new BlockBedrock();
+        for (uint i = 0; i < STONE.Length; i++)
+            blocks[STONE[i]] = new BlockStone(i);
     }
 
     /** Get an instance of Block corresponding to the ID given */
