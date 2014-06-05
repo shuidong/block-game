@@ -22,6 +22,7 @@ public class World
     // thread communication
     private List<ColumnLoadTask> loadQueue = new List<ColumnLoadTask>();
     private List<ColumnUnloadTask> unloadQueue = new List<ColumnUnloadTask>();
+    private List<ChunkUpdateTask> updateQueue = new List<ChunkUpdateTask>();
     private List<ChunkRenderTask> renderQueue = new List<ChunkRenderTask>();
 
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
@@ -242,60 +243,146 @@ public class World
         }
     }
 
-    /** Set the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, do nothing */
-    public void SetBlockAt(int worldX, int worldY, int worldZ, ushort newBlock)
+    /** Can this block see the sky? */
+    public bool CanSeeSky(int x, int y, int z)
     {
-        Vector2i colPos;
-        
-        // update the block
+        for (int h = y + 1; h < WORLD_HEIGHT * CHUNK_SIZE; h++)
+        {
+            if (Block.GetInstance(GetBlockAt(x, h, z, Block.AIR)).opaque)
+                return false;
+        }
+        return true;
+    }
+
+    /** Set the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, do nothing */
+    public void SetBlockAt(int worldX, int worldY, int worldZ, ushort newBlockID)
+    {
+        Vector2i colPos = MiscMath.WorldToColumnCoords(worldX, worldZ);
+
+        // get info
+        ushort oldBlockID = GetBlockAt(worldX, worldY, worldZ, Block.AIR);
+        Block oldBlock = Block.GetInstance(oldBlockID);
+        Block newBlock = Block.GetInstance(newBlockID);
+
+        // let the old block do whatever it needs to
+        oldBlock.OnBreak(this, worldX, worldY, worldZ, newBlockID);
+
+        // set the block
         lock (this)
         {
-            colPos = MiscMath.WorldToColumnCoords(worldX, worldZ);
             Column col;
             if (loadedData.TryGetValue(colPos, out col))
             {
                 int localX = MiscMath.Mod(worldX, CHUNK_SIZE);
                 int localY = worldY;
                 int localZ = MiscMath.Mod(worldZ, CHUNK_SIZE);
-                ushort oldBlock = col.blockID[localX, localY, localZ];
-
-                // let the old block do whatever it needs to
-                Block.GetInstance(oldBlock).OnBreak(this, worldX, worldY, worldZ, newBlock);
-
-                // set the block
-                col.blockID[localX, localY, localZ] = newBlock;
-
-                // TODO update lighting
-
-                // let the new block do whatever it needs to
-                Block.GetInstance(newBlock).OnPlace(this, worldX, worldY, worldZ, oldBlock);
+                col.blockID[localX, localY, localZ] = newBlockID;
             }
         }
 
-        // queue chunks for render
-        List<Vector3i> positions = new List<Vector3i>();
-        for (int xx = -1; xx <= 1; xx++)
+        // let the new block do whatever it needs to
+        newBlock.OnPlace(this, worldX, worldY, worldZ, oldBlockID);
+
+        // update lighting if opacity changed
+        if (newBlock.opaque != oldBlock.opaque)
         {
-            for (int yy = -1; yy <= 1; yy++)
+            if (newBlock.opaque)
             {
-                for (int zz = -1; zz <= 1; zz++)
+                // remove light spread
+                FloodFillDark(worldX, worldY, worldZ);
+
+                // anti sunbeam down if exposed to the sky
+                if (CanSeeSky(worldX, worldY, worldZ))
                 {
-                    int x = worldX + xx;
-                    int y = worldY + yy;
-                    int z = worldZ + zz;
-                    if (y >= 0 && y < WORLD_HEIGHT * CHUNK_SIZE)
+                    // flood dark
+                    int h = worldY-1;
+                    do
                     {
-                        Vector3i pos = MiscMath.WorldToChunkCoords(x, y, z);
-                        if (!positions.Contains(pos))
-                            positions.Add(pos);
+                        FloodFillDark(worldX, h, worldZ);
+                        h--;
+                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.STONE)).opaque);
+                }
+            }
+            else
+            {
+                // sunbeam down if exposed to the sky
+                if (CanSeeSky(worldX, worldY, worldZ))
+                {
+                    int h;
+
+                    // sunbeam
+                    h = worldY;
+                    do
+                    {
+                        SetLightAt(worldX, h, worldZ, CubeRenderHelper.MAX_LIGHT);
+                        h--;
+                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.STONE)).opaque);
+
+                    // flood
+                    h = worldY;
+                    do
+                    {
+                        FloodFillLight(worldX, h, worldZ, CubeRenderHelper.MAX_LIGHT, true);
+                        h--;
+                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.STONE)).opaque);
+                }
+
+                // let light from nearby blocks
+                for (int x = worldX - 1; x <= worldX + 1; x++)
+                {
+                    for (int y = worldY - 1; y <= worldY + 1; y++)
+                    {
+                        for (int z = worldZ - 1; z <= worldZ + 1; z++)
+                        {
+                            byte remainingLight = GetLightAt(x, y, z, 0);
+                            FloodFillLight(x, y, z, remainingLight, true);
+                        }
                     }
                 }
             }
         }
-        foreach (Vector3i pos in positions)
+
+        // mark the chunks as modified
+        for (int x = worldX - 1; x <= worldX + 1; x++)
         {
-            ChunkRenderTask task = new ChunkRenderTask(pos, RenderChunk(pos));
-            lock (renderQueue) renderQueue.Add(task);
+            for (int y = worldY - 1; y <= worldY + 1; y++)
+            {
+                for (int z = worldZ - 1; z <= worldZ + 1; z++)
+                {
+                    MarkModified(MiscMath.WorldToChunkCoords(x, y, z));
+                }
+            }
+        }
+    }
+
+    /** Set the light level at the position (worldX, worldY, worldZ). If the position is not currently loaded, do nothing */
+    public void SetLightAt(int worldX, int worldY, int worldZ, byte newLight)
+    {
+        Vector2i colPos = MiscMath.WorldToColumnCoords(worldX, worldZ);
+
+        // set the light
+        lock (this)
+        {
+            Column col;
+            if (loadedData.TryGetValue(colPos, out col))
+            {
+                int localX = MiscMath.Mod(worldX, CHUNK_SIZE);
+                int localY = worldY;
+                int localZ = MiscMath.Mod(worldZ, CHUNK_SIZE);
+                col.lightLevel[localX, localY, localZ] = newLight;
+            }
+        }
+
+        // mark the chunks as modified
+        for (int x = worldX - 1; x <= worldX + 1; x++)
+        {
+            for (int y = worldY - 1; y <= worldY + 1; y++)
+            {
+                for (int z = worldZ - 1; z <= worldZ + 1; z++)
+                {
+                    MarkModified(MiscMath.WorldToChunkCoords(x, y, z));
+                }
+            }
         }
     }
 
@@ -305,6 +392,20 @@ public class World
         lock (this)
         {
             return loadedData[pos].maxHeight;
+        }
+    }
+
+    /** Mark this chunk as modified and in need of rerender */
+    public void MarkModified(Vector3i pos)
+    {
+        lock (renderQueue)
+        {
+            foreach (ChunkRenderTask task in renderQueue)
+            {
+                if (task.pos.Equals(pos))
+                    return;
+            }
+            renderQueue.Add(new ChunkRenderTask(pos));
         }
     }
 
@@ -333,6 +434,13 @@ public class World
         return mesh;
     }
 
+    /** Render a chunk and queue it for update */
+    public void PerformRenderTask(ChunkRenderTask task)
+    {
+        MeshBuildInfo info = RenderChunk(task.pos);
+        lock (updateQueue) updateQueue.Add(new ChunkUpdateTask(task.pos, info));
+    }
+
     /** Generate the mesh for a specified column */
     public MeshBuildInfo[] RenderColumn(Vector2i pos)
     {
@@ -355,6 +463,85 @@ public class World
             }
         }
         return meshes;
+    }
+
+    /** Flood fill light from this block into the world */
+    public void FloodFillLight(int x, int y, int z, byte remainingLight, bool source)
+    {
+        // stop if spread to limit
+        if (remainingLight <= 0)
+            return;
+
+        // get current status
+        ushort block = GetBlockAt(x, y, z, Block.STONE);
+        byte light = GetLightAt(x, y, z, 0);
+
+        // if opaque, stop spreading
+        if (Block.GetInstance(block).opaque)
+        {
+            SetLightAt(x, y, z, 0);
+            return;
+        }
+
+        // spread here
+        if (source || light < remainingLight)
+        {
+            SetLightAt(x, y, z, remainingLight);
+            remainingLight--;
+
+            if (remainingLight > 0)
+            {
+                FloodFillLight(x + 1, y, z, remainingLight, false);
+                FloodFillLight(x - 1, y, z, remainingLight, false);
+                FloodFillLight(x, y + 1, z, remainingLight, false);
+                FloodFillLight(x, y - 1, z, remainingLight, false);
+                FloodFillLight(x, y, z + 1, remainingLight, false);
+                FloodFillLight(x, y, z - 1, remainingLight, false);
+            }
+        }
+    }
+
+    /** Undo flood fill light from this block into the world */
+    public void FloodFillDark(int x, int y, int z)
+    {
+        List<Vector3i> endpoints = new List<Vector3i>();
+        FloodFillDarkInternal(x, y, z, GetLightAt(x, y, z, 0), true, endpoints);
+
+        foreach (Vector3i pos in endpoints)
+        {
+            byte light = GetLightAt(pos.x, pos.y, pos.z, 0);
+            FloodFillLight(pos.x, pos.y, pos.z, light, true);
+        }
+    }
+
+    /** Helper function for FloodFillDark */
+    private void FloodFillDarkInternal(int x, int y, int z, byte previousLight, bool source, List<Vector3i> endpoints)
+    {
+        // get current status
+        byte light = GetLightAt(x, y, z, CubeRenderHelper.MAX_LIGHT);
+
+        // fill
+        if (light > 0)
+        {
+            if (source || light < previousLight)
+            {
+                // darken this block
+                SetLightAt(x, y, z, 0);
+
+                // spread
+                FloodFillDarkInternal(x+1, y, z, light, false, endpoints);
+                FloodFillDarkInternal(x-1, y, z, light, false, endpoints);
+                FloodFillDarkInternal(x, y+1, z, light, false, endpoints);
+                FloodFillDarkInternal(x, y-1, z, light, false, endpoints);
+                FloodFillDarkInternal(x, y, z+1, light, false, endpoints);
+                FloodFillDarkInternal(x, y, z-1, light, false, endpoints);
+            }
+            else
+            {
+                // save endpoint for filling light later
+                endpoints.Add(new Vector3i(x, y, z));
+            }
+        }
     }
 
     /** Return the next column that should be loaded */
@@ -393,7 +580,25 @@ public class World
         }
     }
 
-    /** Return the next column that should be rendered */
+    /** Return the next chunk that should be updated */
+    public ChunkUpdateTask GetNextUpdateChunk()
+    {
+        lock (updateQueue)
+        {
+            if (updateQueue.Count > 0)
+            {
+                ChunkUpdateTask result = updateQueue[0];
+                updateQueue.RemoveAt(0);
+                return result;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    /** Return the next chunk that should be rendered */
     public ChunkRenderTask GetNextRenderChunk()
     {
         lock (renderQueue)
@@ -409,39 +614,5 @@ public class World
                 return null;
             }
         }
-    }
-}
-
-public class ColumnLoadTask
-{
-    public Vector2i pos;
-    public MeshBuildInfo[] meshes;
-
-    public ColumnLoadTask(Vector2i pos, MeshBuildInfo[] meshes)
-    {
-        this.pos = pos;
-        this.meshes = meshes;
-    }
-}
-
-public class ColumnUnloadTask
-{
-    public Vector2i pos;
-
-    public ColumnUnloadTask(Vector2i pos)
-    {
-        this.pos = pos;
-    }
-}
-
-public class ChunkRenderTask
-{
-    public Vector3i pos;
-    public MeshBuildInfo mesh;
-
-    public ChunkRenderTask(Vector3i pos, MeshBuildInfo mesh)
-    {
-        this.pos = pos;
-        this.mesh = mesh;
     }
 }
