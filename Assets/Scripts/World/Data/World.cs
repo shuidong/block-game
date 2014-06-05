@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -245,9 +245,12 @@ public class World
     /** Set the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, do nothing */
     public void SetBlockAt(int worldX, int worldY, int worldZ, ushort newBlock)
     {
+        Vector2i colPos;
+        
+        // update the block
         lock (this)
         {
-            Vector2i colPos = MiscMath.WorldToColumnCoords(worldX, worldZ);
+            colPos = MiscMath.WorldToColumnCoords(worldX, worldZ);
             Column col;
             if (loadedData.TryGetValue(colPos, out col))
             {
@@ -267,6 +270,32 @@ public class World
                 // let the new block do whatever it needs to
                 Block.GetInstance(newBlock).OnPlace(this, worldX, worldY, worldZ, oldBlock);
             }
+        }
+
+        // queue chunks for render
+        List<Vector3i> positions = new List<Vector3i>();
+        for (int xx = -1; xx < 1; xx++)
+        {
+            for (int yy = -1; yy <= 1; yy++)
+            {
+                for (int zz = -1; zz <= 1; zz++)
+                {
+                    int x = worldX + xx;
+                    int y = worldY + yy;
+                    int z = worldZ + zz;
+                    if (y >= 0 && y < WORLD_HEIGHT * CHUNK_SIZE)
+                    {
+                        Vector3i pos = MiscMath.WorldToChunkCoords(x, y, z);
+                        if (!positions.Contains(pos))
+                            positions.Add(pos);
+                    }
+                }
+            }
+        }
+        foreach (Vector3i pos in positions)
+        {
+            ChunkRenderTask task = new ChunkRenderTask(pos, RenderChunk(pos));
+            lock (renderQueue) renderQueue.Add(task);
         }
     }
 

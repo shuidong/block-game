@@ -2228,6 +2228,7 @@ MonoBehaviour:
   collisionMakerPrefab: {fileID: 100000, guid: 0e086d6d9a5774c76a17c8d3d0f409ee, type: 2}
   worldObject: {fileID: 1999134240}
   radius: 5
+  collisionMaker: {fileID: 0}
 --- !u!1 &1999134239
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
-class ModifyTerrain
+class WorldInterface
 {
     const float smallestBlockThickness = 0.2f;
 

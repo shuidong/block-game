@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class PlayerLogic : MonoBehaviour
@@ -10,6 +10,7 @@ public class PlayerLogic : MonoBehaviour
     public TextMesh blockIndicator;
     public GameObject targetCube;
     public float reach = 4;
+    public ushort held = 1;
 
     void Start()
     {
@@ -17,40 +18,42 @@ public class PlayerLogic : MonoBehaviour
         world = GetComponent<CollideWithTerrain>().worldObject.world;
     }
 
-    void FixedUpdate()
+    void Update()
     {
         Ray ray = new Ray(cameraObject.transform.position, cameraObject.transform.forward);
         RaycastHit hit;
-        bool didHit = Physics.Raycast(ray, out hit, reach);
 
-        // update the block indicator
-        if (blockIndicator)
+        if (Physics.Raycast(ray, out hit, reach))
         {
-            if (didHit)
+            // did hit
+            targetCube.transform.position = WorldInterface.GetHitPositionIn(hit);
+            targetCube.SetActive(true);
+
+            ushort block = WorldInterface.GetBlock(world, hit);
+            blockIndicator.text = Block.GetInstance(block).name;
+
+            if (InputProxy.GetButtonDown("Dig"))
             {
-                // try to hit the terrain
-                ushort block = ModifyTerrain.GetBlock(world, hit);
-                blockIndicator.text = Block.GetInstance(block).name;
+                WorldInterface.ReplaceBlock(world, hit, Block.AIR);
+                GetComponent<CollideWithTerrain>().collisionMaker.UpdateColliders();
             }
-            else
+
+            if (InputProxy.GetButtonDown("Use"))
             {
-                // otherwise make it blank
-                blockIndicator.text = "";
+                WorldInterface.AddBlock(world, hit, held);
+                GetComponent<CollideWithTerrain>().collisionMaker.UpdateColliders();
+            }
+
+            if (InputProxy.GetButtonDown("Equip"))
+            {
+                held = WorldInterface.GetBlock(world, hit);
             }
         }
-
-        // update the target cube
-        if (targetCube)
+        else
         {
-            if (didHit)
-            {
-                targetCube.transform.position = ModifyTerrain.GetHitPositionIn(hit);
-                targetCube.SetActive(true);
-            }
-            else
-            {
-                targetCube.SetActive(false);
-            }
+            // did not hit
+            blockIndicator.text = "";
+            targetCube.SetActive(false);
         }
     }
 }

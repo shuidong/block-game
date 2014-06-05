@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class CollideWithTerrain : MonoBehaviour {
@@ -7,13 +7,16 @@ public class CollideWithTerrain : MonoBehaviour {
     public WorldController worldObject;
     public int radius = 2;
 
+    [HideInInspector]
+    public CollisionMaker collisionMaker;
+
     void Awake() {
         GameObject obj = Instantiate(collisionMakerPrefab) as GameObject;
-        CollisionMaker comp = obj.GetComponent<CollisionMaker>();
-        comp.targetObject = transform;
-        comp.world = worldObject.world;
-        comp.xRadius = radius;
-        comp.yRadius = radius;
-        comp.zRadius = radius;
+        collisionMaker = obj.GetComponent<CollisionMaker>();
+        collisionMaker.targetObject = transform;
+        collisionMaker.world = worldObject.world;
+        collisionMaker.xRadius = radius;
+        collisionMaker.yRadius = radius;
+        collisionMaker.zRadius = radius;
     }
 }

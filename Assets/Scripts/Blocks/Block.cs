@@ -1,13 +1,13 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public abstract class Block
 {
     // block ids
     public const ushort AIR = 0;
-    public const ushort STONE = 1;
-    public const ushort DIRT = 3;
-    public const ushort GRASS = 4;
+    public const ushort DIRT = 1;
+    public const ushort GRASS = 2;
+    public const ushort STONE = 3;
 
     // array of instances of all block types
     private static Block[] blocks;
@@ -17,9 +17,9 @@ public abstract class Block
     {
         blocks = new Block[ushort.MaxValue + 1];
         blocks [AIR] = new BlockAir ();
-        blocks [STONE] = new BlockStone ();
         blocks [DIRT] = new BlockDirt ();
         blocks [GRASS] = new BlockGrass ();
+        blocks[STONE] = new BlockStone();
     }
 
     /** Get an instance of Block corresponding to the ID given */
