@@ -40,8 +40,11 @@ public class WorldController : MonoBehaviour
         // thread to load chunks as the player travels
         new Thread(new ThreadStart(ThreadLoadChunksAroundPlayer)).Start();
 
-        // thread to render and save chunks
-        new Thread(new ThreadStart(ThreadRenderAndSave)).Start();
+        // thread to render chunks
+        new Thread(new ThreadStart(ThreadRender)).Start();
+
+        // thread to save chunks
+        new Thread(new ThreadStart(ThreadSave)).Start();
 
         // thread for block ticks
         new Thread(new ThreadStart(ThreadBlockTick)).Start();
@@ -97,7 +100,7 @@ public class WorldController : MonoBehaviour
         }
     }
 
-    void ThreadRenderAndSave()
+    void ThreadRender()
     {
         try
         {
@@ -112,6 +115,22 @@ public class WorldController : MonoBehaviour
                         world.PerformRenderTask(render);
                 } while (render != null);
 
+                // sleep for a bit
+                Thread.Sleep(1);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+        }
+    }
+
+    void ThreadSave()
+    {
+        try
+        {
+            while (isPlaying)
+            {
                 // save modified columns
                 ColumnSaveTask save;
                 do
