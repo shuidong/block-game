@@ -42,6 +42,9 @@ public class WorldController : MonoBehaviour
 
         // thread to render and save chunks
         new Thread(new ThreadStart(ThreadRenderAndSave)).Start();
+
+        // thread for block ticks
+        new Thread(new ThreadStart(ThreadBlockTick)).Start();
     }
 
     void FixedUpdate()
@@ -76,6 +79,22 @@ public class WorldController : MonoBehaviour
             if (update != null && instances.ContainsKey(update.pos))
                 UpdateMesh(instances[update.pos], update.mesh);
         } while (update != null);
+    }
+
+    void ThreadBlockTick()
+    {
+        try
+        {
+            while (isPlaying)
+            {
+                world.TickBlocks();
+                Thread.Sleep(9);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+        }
     }
 
     void ThreadRenderAndSave()

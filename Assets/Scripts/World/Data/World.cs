@@ -50,9 +50,6 @@ public class World
     /** Given a rectangle with corners 'min' and 'max', load all the chunks within the rectangle and unload all the chunks not within the rectangle */
     public void LoadInRange(Vector2i min, Vector2i max)
     {
-        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-        watch.Start();
-
         // helper variables
         int xMin = min.x;
         int zMin = min.z;
@@ -156,9 +153,6 @@ public class World
                 lock (this) renderedData.Add(pos);
             }
         }
-
-        watch.Stop();
-        Debug.Log("Load time: " + watch.ElapsedMilliseconds / 1000f + "s");
     }
 
     /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
@@ -624,6 +618,19 @@ public class World
         {
             Debug.LogError(e);
             return null;
+        }
+    }
+
+    /** Randomly tick one block in each column */
+    public void TickBlocks()
+    {
+        lock (this)
+        {
+            foreach (Vector2i pos in renderedData)
+            {
+                Column col = loadedData[pos];
+                col.TickBlock(this, pos);
+            }
         }
     }
 

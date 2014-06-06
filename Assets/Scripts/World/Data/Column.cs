@@ -5,6 +5,8 @@ using System.Runtime.Serialization;
 [System.Serializable]
 public class Column : ISerializable
 {
+    private System.Random random;
+
     // column data
     public ushort[, ,] blockID = new ushort[World.CHUNK_SIZE, World.CHUNK_SIZE * World.WORLD_HEIGHT, World.CHUNK_SIZE];
     public byte[, ,] lightLevel = new byte[World.CHUNK_SIZE, World.CHUNK_SIZE * World.WORLD_HEIGHT, World.CHUNK_SIZE];
@@ -18,11 +20,15 @@ public class Column : ISerializable
     private const string KEY_CACHE_MAX_HEIGHT = "CachedMaximumHeight";
 
     /** Crate an empty column */
-    public Column() { }
+    public Column()
+    {
+        random = new System.Random();
+    }
 
     /** Deserialize this column */
     public Column(SerializationInfo info, StreamingContext ctxt)
     {
+        random = new System.Random();
         string version = (string)info.GetValue(Constants.KEY_SAVE_VERSION, typeof(string));
 
         if (version == Constants.SAVE_VERSION_ORIG)
@@ -44,5 +50,16 @@ public class Column : ISerializable
         info.AddValue(KEY_BLOCK_IDS, blockID);
         info.AddValue(KEY_LIGHT_LEVELS, lightLevel);
         info.AddValue(KEY_CACHE_MAX_HEIGHT, maxHeight);
+    }
+
+    /** Randomly tick one block in this column */
+    public void TickBlock(World world, Vector2i pos)
+    {
+        int x = random.Next(World.CHUNK_SIZE);
+        int y = random.Next(World.CHUNK_SIZE * World.WORLD_HEIGHT);
+        int z = random.Next(World.CHUNK_SIZE);
+        ushort block;
+        lock (this) block = blockID[x, y, z];
+        Block.GetInstance(block).Tick(world, pos.x * World.CHUNK_SIZE + x, y, pos.z * World.CHUNK_SIZE + z);
     }
 }

@@ -55,12 +55,11 @@ public abstract class Block
      */
 
     /** Called when the block is replaced by another block or air */
-    public virtual void OnBreak(World world, int x, int y, int z, ushort newBlock)
-    {
-    }
+    public virtual void OnBreak(World world, int x, int y, int z, ushort newBlock) { }
 
     /** Called when the block replaces another block or air */
-    public virtual void OnPlace(World world, int x, int y, int z, ushort oldBlock)
-    {
-    }
+    public virtual void OnPlace(World world, int x, int y, int z, ushort oldBlock) { }
+
+    /** Called at random intervals, roughly once every 5 mins per block */
+    public virtual void Tick(World world, int x, int y, int z) { }
 }
