@@ -9,21 +9,21 @@ QualitySettings:
   - serializedVersion: 2
     name: Default
     pixelLightCount: 1
-    shadows: 1
-    shadowResolution: 2
+    shadows: 0
+    shadowResolution: 0
     shadowProjection: 1
-    shadowCascades: 4
-    shadowDistance: 150
-    blendWeights: 4
+    shadowCascades: 1
+    shadowDistance: 15
+    blendWeights: 1
     textureQuality: 0
-    anisotropicTextures: 2
+    anisotropicTextures: 1
     antiAliasing: 0
-    softParticles: 1
-    softVegetation: 1
+    softParticles: 0
+    softVegetation: 0
     vSyncCount: 0
-    lodBias: 2
+    lodBias: .300000012
     maximumLODLevel: 0
-    particleRaycastBudget: 4096
+    particleRaycastBudget: 4
     excludedTargetPlatforms: []
   m_PerPlatformDefaultQuality:
     Android: 0
@@ -31,11 +31,15 @@ QualitySettings:
     FlashPlayer: 3
     GLES Emulation: 3
     PS3: 3
+    PS4: 3
+    PSM: 3
+    PSP2: 3
+    Samsung TV: 2
     Standalone: 0
     Tizen: 2
-    WP8: 3
+    WP8: 0
     Web: 0
-    Wii: 3
-    Windows Store Apps: 3
+    Windows Store Apps: 0
     XBOX360: 3
+    XboxOne: 3
     iPhone: 0

@@ -1,15 +1,15 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
-public class BlockStone : Block {
-	public BlockStone() {
-		name = "Stone";
-		textures = new TextureLayout (0);
-	}
-
-	public override Color GetColor (GameWorld world, int x, int y, int z, byte meta)
-	{
-		float val = 1f - meta * .125f;
-		return new Color (val, val, val, 1f);
-	}
+public class BlockStone : Block
+{
+    public readonly uint depth;
+    
+    public BlockStone(uint depth)
+    {
+        this.depth = depth;
+        name = "Stone (Depth " + (depth + 1) + ")";
+        float mult = 1f - (depth * .1f);
+        renderer = new RenderFullBlock(new TextureLayout(0), Color.white * mult);
+    }
 }

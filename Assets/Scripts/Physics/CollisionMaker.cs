@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class CollisionMaker : MonoBehaviour {
@@ -6,7 +6,7 @@ public class CollisionMaker : MonoBehaviour {
 	public int yRadius = 3;
 	public int zRadius = 3;
 	public Transform targetObject;
-	public GameWorld world;
+	public World world;
 	private Vector3 origin;
 	private BoxCollider[,,] points;
 
@@ -22,9 +22,10 @@ public class CollisionMaker : MonoBehaviour {
 			}
 		}
 		UpdateColliders ();
+        StartCoroutine (UpdatePeriodically ());
 	}
 
-	void LateUpdate() {
+	void FixedUpdate() {
 		Vector3 oldPos = transform.position;
 
 		if (targetObject) {
@@ -38,18 +39,31 @@ public class CollisionMaker : MonoBehaviour {
 		}
 	}
 
+    IEnumerator UpdatePeriodically() {
+        while (true) {
+            yield return new WaitForSeconds(1);
+            UpdateColliders();
+        }
+    }
+
 	public void UpdateColliders() {
 		Vector3 myPos = transform.position;
 		for (int x = 0; x < points.GetLength(0); x++) {
 			for (int y = 0; y < points.GetLength(1); y++) {
 				for (int z = 0; z < points.GetLength(2); z++) {
 					Vector3 boxOffset = origin + new Vector3(x, y, z);
-					byte blockID = world.Block(boxOffset + myPos, ListBlocks.STONE).block;
+                    Vector3 boxPosition = boxOffset + myPos;
+
+                    int worldX = (int) boxPosition.x;
+                    int worldY = (int) boxPosition.y;
+                    int worldZ = (int) boxPosition.z;
+
+                    ushort blockID = world.GetBlockAt(worldX, worldY, worldZ, Block.DIRT);
 					BoxCollider boxCollider = points[x,y,z];
-					Block block = ListBlocks.instance.blocks[blockID];
-					if(block.collide) {
+					Block block = Block.GetInstance(blockID);
+					if(block.opaque) {
 						boxCollider.enabled = true;
-						Bounds shape = block.GetBounds();
+						Bounds shape = block.collisionBounds;
 						boxCollider.center = boxOffset + shape.center;
 						boxCollider.size = shape.size;
 					} else if(boxCollider.enabled) {
@@ -59,17 +73,6 @@ public class CollisionMaker : MonoBehaviour {
 					}
 				}
 			}
-		}
-	}
-
-	void OnDrawGizmosSelected() {
-		if (points == null)
-			return;
-
-		Gizmos.color = Color.blue;
-		Vector3 pos = transform.position;
-		foreach (BoxCollider b in points) {
-			if(b.enabled) Gizmos.DrawWireCube(b.center + pos, b.size);
 		}
 	}
 }

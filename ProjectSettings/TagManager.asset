@@ -37,10 +37,6 @@ TagManager:
   User Layer 30: 
   User Layer 31: 
   m_SortingLayers:
-  - name: Controls
-    userID: 1
-    uniqueID: 2667247965
-    locked: 0
   - name: Default
     userID: 0
     uniqueID: 0

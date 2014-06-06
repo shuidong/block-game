@@ -1,9 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class BlockDirt : Block {
-	public BlockDirt() {
-		name = "Dirt";
-		textures = new TextureLayout (1);
+    public BlockDirt() {
+        name = "Dirt";
+        renderer = new RenderFullBlock(new TextureLayout(1), Color.white);
     }
 }
