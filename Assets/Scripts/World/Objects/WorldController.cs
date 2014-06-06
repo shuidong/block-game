@@ -103,7 +103,7 @@ public class WorldController : MonoBehaviour
                 } while (save != null);
 
                 // sleep for a bit
-                Thread.Sleep(1000/60);
+                Thread.Sleep(1);
             }
         }
         catch (System.Exception e)
