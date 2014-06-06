@@ -12,12 +12,12 @@ SceneSettings:
     backfaceThreshold: 100
 --- !u!104 &2
 RenderSettings:
-  m_Fog: 0
-  m_FogColor: {r: .5, g: .5, b: .5, a: 1}
-  m_FogMode: 3
+  m_Fog: 1
+  m_FogColor: {r: .576881468, g: .645664275, b: .808823526, a: 1}
+  m_FogMode: 1
   m_FogDensity: .00999999978
-  m_LinearFogStart: 0
-  m_LinearFogEnd: 300
+  m_LinearFogStart: 100
+  m_LinearFogEnd: 200
   m_AmbientLight: {r: .200000003, g: .200000003, b: .200000003, a: 1}
   m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: .5
@@ -903,7 +903,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: .192156866, g: .301960796, b: .474509805, a: 0}
+  m_BackGroundColor: {r: .576470613, g: .647058845, b: .807843149, a: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -2052,6 +2052,18 @@ Prefab:
       propertyPath: worldObject
       value: 
       objectReference: {fileID: 1999134240}
+    - target: {fileID: 2000002, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
+      propertyPath: m_BackGroundColor.r
+      value: .576470613
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000002, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
+      propertyPath: m_BackGroundColor.g
+      value: .647058845
+      objectReference: {fileID: 0}
+    - target: {fileID: 2000002, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
+      propertyPath: m_BackGroundColor.b
+      value: .807843149
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
   m_RootGameObject: {fileID: 1948491181}
@@ -2258,7 +2270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   saveName: World 1
   worldType: 0
-  loadDistance: 5
+  loadDistance: 10
   chunkPrefab: {fileID: 100000, guid: 41ea8133a03294ce5a964daed779e81e, type: 2}
 --- !u!4 &1999134241
 Transform:
