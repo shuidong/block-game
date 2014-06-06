@@ -5,12 +5,12 @@ public class PlayerLogic : MonoBehaviour
 {
     private GameObject cameraObject;
     private World world;
+    private ushort held = Block.STONE[0];
 
     // editor params
     public TextMesh blockIndicator;
     public GameObject targetCube;
     public float reach = 4;
-    public ushort held = 1;
 
     // capture cursor
     public static bool lockCursor = true;

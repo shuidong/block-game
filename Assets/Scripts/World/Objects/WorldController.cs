@@ -36,9 +36,16 @@ public class WorldController : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
         lock (playerPosLock)
             playerPos = player.position;
-        Thread t = new Thread(new ThreadStart(LoadChunksAroundPlayer));
-        t.Priority = System.Threading.ThreadPriority.Lowest;
-        t.Start();
+
+        // thread to load chunks as the player travels
+        Thread loadThread = new Thread(new ThreadStart(ThreadLoadChunksAroundPlayer));
+        loadThread.Priority = System.Threading.ThreadPriority.Lowest;
+        loadThread.Start();
+
+        // thread to render and save chunks
+        Thread renderSaveThread = new Thread(new ThreadStart(ThreadRenderAndSave));
+        renderSaveThread.Priority = System.Threading.ThreadPriority.Lowest;
+        renderSaveThread.Start();
     }
 
     void FixedUpdate()
@@ -65,15 +72,6 @@ public class WorldController : MonoBehaviour
                 InstantiateChunk(load.pos, load.meshes);
         } while (load != null);
 
-        // render modified chunks
-        ChunkRenderTask render;
-        do
-        {
-            render = world.GetNextRenderChunk();
-            if (render != null)
-                world.PerformRenderTask(render);
-        } while (render != null);
-
         // update rendered chunks
         ChunkUpdateTask update;
         do
@@ -82,18 +80,43 @@ public class WorldController : MonoBehaviour
             if (update != null && instances.ContainsKey(update.pos))
                 UpdateMesh(instances[update.pos], update.mesh);
         } while (update != null);
-
-        // save modified columns
-        ColumnSaveTask save;
-        do
-        {
-            save = world.GetNextSaveColumn();
-            if (save != null)
-                world.Save(save.pos);
-        } while (save != null);
     }
 
-    void LoadChunksAroundPlayer()
+    void ThreadRenderAndSave()
+    {
+        try
+        {
+            while (isPlaying)
+            {
+                // render modified chunks
+                ChunkRenderTask render;
+                do
+                {
+                    render = world.GetNextRenderChunk();
+                    if (render != null)
+                        world.PerformRenderTask(render);
+                } while (render != null);
+
+                // save modified columns
+                ColumnSaveTask save;
+                do
+                {
+                    save = world.GetNextSaveColumn();
+                    if (save != null)
+                        world.Save(save.pos);
+                } while (save != null);
+
+                // sleep for a bit
+                Thread.Sleep(1000/60);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+        }
+    }
+
+    void ThreadLoadChunksAroundPlayer()
     {
         try
         {
