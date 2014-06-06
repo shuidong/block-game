@@ -58,6 +58,7 @@ public class World
         int zMin = min.z;
         int xMax = max.x;
         int zMax = max.z;
+        Vector2i center = new Vector2i((xMin + xMax) / 2, (zMin + zMax) / 2);
         List<Vector2i> removal = new List<Vector2i>();
         List<Vector2i> addition = new List<Vector2i>();
         List<Vector2i> render = new List<Vector2i>();
@@ -141,6 +142,10 @@ public class World
             }
         }
 
+        // sort render queue by distance
+        render.Sort(new Vector2i.DistanceComparer(center));
+
+        // render and queue for mesh update
         foreach (Vector2i pos in render)
         {
             // notify main thread

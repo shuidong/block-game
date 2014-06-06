@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
+using UnityEngine;
+using System.Collections.Generic;
 
 [System.Serializable]
 public struct Vector2i : System.IEquatable<Vector2i>
@@ -29,9 +29,26 @@ public struct Vector2i : System.IEquatable<Vector2i>
         return new Vector2i (a.x + b.x, a.z + b.z);
     }
 
-    public static Vector2i operator - (Vector2i a, Vector2i b)
+    public static Vector2i operator -(Vector2i a, Vector2i b)
     {
-        return new Vector2i (a.x - b.x, a.z - b.z);
+        return new Vector2i(a.x - b.x, a.z - b.z);
+    }
+
+    public class DistanceComparer : IComparer<Vector2i>
+    {
+        Vector2i center;
+
+        public DistanceComparer(Vector2i center)
+        {
+            this.center = center;
+        }
+
+        public int Compare(Vector2i a, Vector2i b)
+        {
+            float distanceA = a.Distance(center);
+            float distanceB = b.Distance(center);
+            return distanceA.CompareTo(distanceB);
+        }
     }
 }
 
@@ -68,5 +85,22 @@ public struct Vector3i : System.IEquatable<Vector3i>
     public static Vector3i operator - (Vector3i a, Vector3i b)
     {
         return new Vector3i (a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+
+    public class DistanceComparer : IComparer<Vector3i>
+    {
+        Vector3i center;
+
+        public DistanceComparer(Vector3i center)
+        {
+            this.center = center;
+        }
+
+        public int Compare(Vector3i a, Vector3i b)
+        {
+            float distanceA = a.Distance(center);
+            float distanceB = b.Distance(center);
+            return distanceA.CompareTo(distanceB);
+        }
     }
 }
