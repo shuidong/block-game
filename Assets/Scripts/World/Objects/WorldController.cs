@@ -16,6 +16,7 @@ public class WorldController : MonoBehaviour
     public TerrainType worldType = TerrainType.MAINWORLD;
     public int loadDistance = 8;
     public GameObject chunkPrefab;
+    public Camera loadingScreen;
 
     // instantiated chunks
     Dictionary<Vector3i, ChunkRenderer> instances = new Dictionary<Vector3i, ChunkRenderer>();
@@ -37,6 +38,10 @@ public class WorldController : MonoBehaviour
         lock (playerPosLock)
             playerPos = player.position;
 
+        // load the initial world
+        Vector2i center = MiscMath.WorldToColumnCoords(playerPos.x, playerPos.z);
+        world.LoadInRange(new Vector2i(-3, -3) + center, new Vector2i(3, 3) + center);
+
         // thread to load chunks as the player travels
         new Thread(new ThreadStart(ThreadLoadChunksAroundPlayer)).Start();
 
@@ -48,6 +53,9 @@ public class WorldController : MonoBehaviour
 
         // thread for block ticks
         new Thread(new ThreadStart(ThreadBlockTick)).Start();
+
+        // show the game
+        Destroy(loadingScreen);
     }
 
     void FixedUpdate()
