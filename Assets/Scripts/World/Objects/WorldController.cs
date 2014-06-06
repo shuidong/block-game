@@ -38,14 +38,10 @@ public class WorldController : MonoBehaviour
             playerPos = player.position;
 
         // thread to load chunks as the player travels
-        Thread loadThread = new Thread(new ThreadStart(ThreadLoadChunksAroundPlayer));
-        loadThread.Priority = System.Threading.ThreadPriority.Lowest;
-        loadThread.Start();
+        new Thread(new ThreadStart(ThreadLoadChunksAroundPlayer)).Start();
 
         // thread to render and save chunks
-        Thread renderSaveThread = new Thread(new ThreadStart(ThreadRenderAndSave));
-        renderSaveThread.Priority = System.Threading.ThreadPriority.Lowest;
-        renderSaveThread.Start();
+        new Thread(new ThreadStart(ThreadRenderAndSave)).Start();
     }
 
     void FixedUpdate()
