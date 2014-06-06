@@ -44,3 +44,13 @@ public class ChunkRenderTask
         this.pos = pos;
     }
 }
+
+public class ColumnSaveTask
+{
+    public Vector2i pos;
+
+    public ColumnSaveTask(Vector2i pos)
+    {
+        this.pos = pos;
+    }
+}

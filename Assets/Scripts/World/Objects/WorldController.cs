@@ -82,6 +82,15 @@ public class WorldController : MonoBehaviour
             if (update != null && instances.ContainsKey(update.pos))
                 UpdateMesh(instances[update.pos], update.mesh);
         } while (update != null);
+
+        // save modified columns
+        ColumnSaveTask save;
+        do
+        {
+            save = world.GetNextSaveColumn();
+            if (save != null)
+                world.Save(save.pos);
+        } while (save != null);
     }
 
     void LoadChunksAroundPlayer()

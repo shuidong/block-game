@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Text;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+using System.Reflection;
 
 public class World
 {
@@ -24,6 +28,7 @@ public class World
     private List<ColumnUnloadTask> unloadQueue = new List<ColumnUnloadTask>();
     private List<ChunkUpdateTask> updateQueue = new List<ChunkUpdateTask>();
     private List<ChunkRenderTask> renderQueue = new List<ChunkRenderTask>();
+    private List<ColumnSaveTask> saveQueue = new List<ColumnSaveTask>();
 
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
     public World(string saveName, TerrainType worldType)
@@ -105,10 +110,12 @@ public class World
         {
             lock (this)
             {
-                // TODO load from file if available
+                // load from file if available
+                Column col = Load(pos);
 
                 // generate terrain
-                Column col = TerrainGen.Generate(worldType, pos);
+                if (col == null)
+                    col = TerrainGen.Generate(worldType, pos);
 
                 // add to loaded world
                 loadedData.Add(pos, col);
@@ -295,7 +302,7 @@ public class World
                 if (CanSeeSky(worldX, worldY, worldZ))
                 {
                     // flood dark
-                    int h = worldY-1;
+                    int h = worldY - 1;
                     do
                     {
                         FloodFillDark(worldX, h, worldZ);
@@ -396,16 +403,29 @@ public class World
     }
 
     /** Mark this chunk as modified and in need of rerender */
-    public void MarkModified(Vector3i pos)
+    public void MarkModified(Vector3i chunkPos)
     {
+        // mark for rerender
         lock (renderQueue)
         {
             foreach (ChunkRenderTask task in renderQueue)
             {
-                if (task.pos.Equals(pos))
+                if (task.pos.Equals(chunkPos))
                     return;
             }
-            renderQueue.Add(new ChunkRenderTask(pos));
+            renderQueue.Add(new ChunkRenderTask(chunkPos));
+        }
+
+        // mark for save
+        Vector2i colPos = new Vector2i(chunkPos.x, chunkPos.z);
+        lock (saveQueue)
+        {
+            foreach (ColumnSaveTask task in saveQueue)
+            {
+                if (task.pos.Equals(colPos))
+                    return;
+            }
+            saveQueue.Add(new ColumnSaveTask(colPos));
         }
     }
 
@@ -439,6 +459,12 @@ public class World
     {
         MeshBuildInfo info = RenderChunk(task.pos);
         lock (updateQueue) updateQueue.Add(new ChunkUpdateTask(task.pos, info));
+    }
+
+    /** Save a column to disk */
+    public void PerformSaveTask(ColumnSaveTask task)
+    {
+
     }
 
     /** Generate the mesh for a specified column */
@@ -529,12 +555,12 @@ public class World
                 SetLightAt(x, y, z, 0);
 
                 // spread
-                FloodFillDarkInternal(x+1, y, z, light, false, endpoints);
-                FloodFillDarkInternal(x-1, y, z, light, false, endpoints);
-                FloodFillDarkInternal(x, y+1, z, light, false, endpoints);
-                FloodFillDarkInternal(x, y-1, z, light, false, endpoints);
-                FloodFillDarkInternal(x, y, z+1, light, false, endpoints);
-                FloodFillDarkInternal(x, y, z-1, light, false, endpoints);
+                FloodFillDarkInternal(x + 1, y, z, light, false, endpoints);
+                FloodFillDarkInternal(x - 1, y, z, light, false, endpoints);
+                FloodFillDarkInternal(x, y + 1, z, light, false, endpoints);
+                FloodFillDarkInternal(x, y - 1, z, light, false, endpoints);
+                FloodFillDarkInternal(x, y, z + 1, light, false, endpoints);
+                FloodFillDarkInternal(x, y, z - 1, light, false, endpoints);
             }
             else
             {
@@ -542,6 +568,58 @@ public class World
                 endpoints.Add(new Vector3i(x, y, z));
             }
         }
+    }
+
+    /** Save a column to disk */
+    public void Save(Vector2i pos)
+    {
+        string fileName = GetColumnFile(pos);
+        try
+        {
+            // save to file
+            Stream stream = File.Open(fileName, FileMode.OpenOrCreate);
+            BinaryFormatter bformatter = new BinaryFormatter();
+            bformatter.Binder = new VersionDeserializationBinder();
+            bformatter.Serialize(stream, loadedData[pos]);
+            stream.Close();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+            if (File.Exists(fileName))
+                File.Delete(fileName);
+        }
+    }
+
+    /** Load a column from disk */
+    public Column Load(Vector2i pos)
+    {
+        string fileName = GetColumnFile(pos);
+        try
+        {
+            // make sure the file exists
+            if (!File.Exists(fileName))
+                return null;
+
+            // load the file
+            Stream stream = File.Open(fileName, FileMode.Open);
+            BinaryFormatter bformatter = new BinaryFormatter();
+            bformatter.Binder = new VersionDeserializationBinder();
+            Column col = (Column)bformatter.Deserialize(stream);
+            stream.Close();
+            return col;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+            return null;
+        }
+    }
+
+    /** Get the file name of a position */
+    public string GetColumnFile(Vector2i pos)
+    {
+        return saveDir + "" + pos.x + "_" + pos.z + ".column";
     }
 
     /** Return the next column that should be loaded */
@@ -614,5 +692,43 @@ public class World
                 return null;
             }
         }
+    }
+
+    /** Return the next chunk that should be rendered */
+    public ColumnSaveTask GetNextSaveColumn()
+    {
+        lock (saveQueue)
+        {
+            if (saveQueue.Count > 0)
+            {
+                ColumnSaveTask result = saveQueue[0];
+                saveQueue.RemoveAt(0);
+                return result;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+}
+
+public sealed class VersionDeserializationBinder : SerializationBinder
+{
+    public override System.Type BindToType(string assemblyName, string typeName)
+    {
+        if (!string.IsNullOrEmpty(assemblyName) && !string.IsNullOrEmpty(typeName))
+        {
+            System.Type typeToDeserialize = null;
+
+            assemblyName = Assembly.GetExecutingAssembly().FullName;
+
+            // The following line of code returns the type. 
+            typeToDeserialize = System.Type.GetType(System.String.Format("{0}, {1}", typeName, assemblyName));
+
+            return typeToDeserialize;
+        }
+
+        return null;
     }
 }
