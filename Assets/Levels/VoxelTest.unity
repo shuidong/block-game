@@ -2270,7 +2270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   saveName: World 1
   worldType: 0
-  loadDistance: 10
+  loadDistance: 8
   chunkPrefab: {fileID: 100000, guid: 41ea8133a03294ce5a964daed779e81e, type: 2}
   saveChanges: 0
 --- !u!4 &1999134241

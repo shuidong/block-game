@@ -50,6 +50,7 @@ public class World
     /** Given a rectangle with corners 'min' and 'max', load all the chunks within the rectangle and unload all the chunks not within the rectangle */
     public void LoadInRange(Vector2i min, Vector2i max)
     {
+        
         // helper variables
         int xMin = min.x;
         int zMin = min.z;
@@ -59,6 +60,11 @@ public class World
         List<Vector2i> removal = new List<Vector2i>();
         List<Vector2i> addition = new List<Vector2i>();
         List<Vector2i> render = new List<Vector2i>();
+
+        // timing
+        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+        long removalTime, generateTime, renderTime;
+        watch.Start();
 
         // mark positions for removal
         foreach (Vector2i pos in loadedData.Keys)
@@ -89,6 +95,11 @@ public class World
                 lock (unloadQueue) unloadQueue.Add(task);
             }
         }
+
+        // timing
+        watch.Stop();
+        removalTime = watch.ElapsedMilliseconds;
+        watch.Start();
 
         // mark positions for addition
         for (int x = xMin - 1; x <= xMax + 1; x++)
@@ -123,6 +134,11 @@ public class World
             }
         }
 
+        // timing
+        watch.Stop();
+        generateTime = watch.ElapsedMilliseconds;
+        watch.Start();
+
         // mark positions for render
         for (int x = xMin; x <= xMax; x++)
         {
@@ -153,6 +169,11 @@ public class World
                 lock (this) renderedData.Add(pos);
             }
         }
+
+        // timing
+        watch.Stop();
+        renderTime = watch.ElapsedMilliseconds;
+        Debug.Log(System.String.Format("Remove: {0}s | Generate: {1}s | Render {2}s", removalTime / 1000d, generateTime / 1000d, renderTime / 1000d));
     }
 
     /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
@@ -172,6 +193,10 @@ public class World
         localY += chunkPos.y * CHUNK_SIZE;
         return GetBlockAt(colPos, localX, localY, localZ, def);
     }
+
+    // Variables to cache recently accessed column
+    Column cachedColumn;
+    Vector2i cachedPosition;
 
     /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
     public ushort GetBlockAt(Vector2i colPos, int localX, int localY, int localZ, ushort def)
@@ -193,10 +218,19 @@ public class World
         // return the block id at this column, or default
         lock (this)
         {
+            // try to use the cached col
+            if (cachedColumn != null && cachedPosition.Equals(colPos))
+            {
+                return cachedColumn.blockID[localX, localY, localZ];
+            }
+            
+            // find the column and cache before returning
             Column col;
             if (loadedData.TryGetValue(colPos, out col))
             {
                 // return the block
+                cachedPosition = colPos;
+                cachedColumn = col;
                 return col.blockID[localX, localY, localZ];
             }
             else
