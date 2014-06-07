@@ -12,7 +12,7 @@ public class World
 {
     // global world constants
     public const int CHUNK_SIZE = 15;
-    public const int WORLD_HEIGHT = 10;
+    public const int WORLD_HEIGHT = 16;
 
     // basic world info
     private string saveName;
@@ -176,9 +176,11 @@ public class World
     /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
     public ushort GetBlockAt(Vector2i colPos, int localX, int localY, int localZ, ushort def)
     {
-        // if Y is out of bounds return the default
-        if (localY < 0 || localY >= WORLD_HEIGHT * CHUNK_SIZE)
-            return def;
+        // if Y is out of bounds return something sensible
+        if (localY >= WORLD_HEIGHT * CHUNK_SIZE)
+            return Block.AIR;
+        if (localY < 0)
+            return Block.BEDROCK;
 
         // if other coords are out of bounds find another chunk
         if (localX < 0 || localZ < 0 || localX >= CHUNK_SIZE || localZ >= CHUNK_SIZE)

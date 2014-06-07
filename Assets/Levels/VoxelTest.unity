@@ -2376,6 +2376,7 @@ MonoBehaviour:
   loadDistance: 10
   chunkPrefab: {fileID: 100000, guid: 41ea8133a03294ce5a964daed779e81e, type: 2}
   loadingScreen: {fileID: 246695242}
+  saveChanges: 0
 --- !u!4 &1999134241
 Transform:
   m_ObjectHideFlags: 0

@@ -17,6 +17,7 @@ public class WorldController : MonoBehaviour
     public int loadDistance = 8;
     public GameObject chunkPrefab;
     public Camera loadingScreen;
+    public bool saveChanges = true;
 
     // instantiated chunks
     Dictionary<Vector3i, ChunkRenderer> instances = new Dictionary<Vector3i, ChunkRenderer>();
@@ -49,7 +50,7 @@ public class WorldController : MonoBehaviour
         new Thread(new ThreadStart(ThreadRender)).Start();
 
         // thread to save chunks
-        new Thread(new ThreadStart(ThreadSave)).Start();
+        if(saveChanges) new Thread(new ThreadStart(ThreadSave)).Start();
 
         // thread for block ticks
         new Thread(new ThreadStart(ThreadBlockTick)).Start();
