@@ -94,7 +94,7 @@ public static class Noise
 	}
 	
 	// 3D simplex noise
-	public static float GetNoise(double xin, double yin, double zin)
+	public static double GetNoise(double xin, double yin, double zin)
 	{
 		double n0, n1, n2, n3; // Noise contributions from the four corners
 		// Skew the input space to determine which simplex cell we're in
@@ -172,21 +172,21 @@ public static class Noise
 		}
 		// Add contributions from each corner to get the final noise value.
 		// The result is scaled to stay just inside [-1,1] (now [0, 1])
-		return (float)(32.0 * (n0 + n1 + n2 + n3) + 1) * 0.5f; // change to 76.0 if you want
+		return (32.0 * (n0 + n1 + n2 + n3) + 1) * 0.5f; // change to 76.0 if you want
 	}
 	
 	// get multiple octaves of noise at once
-	public static float GetOctaveNoise(double pX, double pY, double pZ, int pOctaves)
+	public static double GetOctaveNoise(double pX, double pY, double pZ, int pOctaves)
 	{
-		float value = 0;
-		float divisor = 0;
-		float currentHalf = 0;
-		float currentDouble = 0;
+		double value = 0;
+		double divisor = 0;
+		double currentHalf = 0;
+		double currentDouble = 0;
 		
 		for(int i = 0; i < pOctaves; i++)
 		{
-			currentHalf = (float)Math.Pow(0.5f, i);
-			currentDouble = (float)Math.Pow(2, i);
+			currentHalf = Math.Pow(0.5f, i);
+			currentDouble = Math.Pow(2, i);
 			value += GetNoise(pX * currentDouble, pY * currentDouble, pZ) * currentHalf;
 			divisor += currentHalf;
 		}
