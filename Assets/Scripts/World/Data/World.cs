@@ -218,7 +218,7 @@ public class World
         lock (this)
         {
             // try to use the cached col
-            if (cachedColumn != null && cachedPosition.Equals(colPos))
+            if (cachedPosition.Equals(colPos) && cachedColumn != null)
             {
                 return cachedColumn.blockID[localX, localY, localZ];
             }
@@ -237,6 +237,34 @@ public class World
                 // not found ):
                 return def;
             }
+        }
+    }
+
+    /** Return the block ID at the position (localX, localY, localZ) in the chunk at chunkPos. Will throw an exception if the chunk isn't found or the positioon is out of range */
+    public ushort GetBlockAtUnsafe(Vector3i chunkPos, int localX, int localY, int localZ)
+    {
+        Vector2i colPos = new Vector2i(chunkPos.x, chunkPos.z);
+        localY += chunkPos.y * CHUNK_SIZE;
+        return GetBlockAtUnsafe(colPos, localX, localY, localZ);
+    }
+
+    /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. Will throw an exception if the column isn't found or the positioon is out of range */
+    public ushort GetBlockAtUnsafe(Vector2i colPos, int localX, int localY, int localZ)
+    {
+        // return the block id at this column, or default
+        lock (this)
+        {
+            // try to use the cached col
+            if (cachedPosition.Equals(colPos) && cachedColumn != null)
+            {
+                return cachedColumn.blockID[localX, localY, localZ];
+            }
+
+            // cache and return
+            Column col = loadedData[colPos];
+            cachedPosition = colPos;
+            cachedColumn = col;
+            return col.blockID[localX, localY, localZ];
         }
     }
 
@@ -491,7 +519,7 @@ public class World
             {
                 for (int z = 0; z < CHUNK_SIZE; z++)
                 {
-                    block = GetBlockAt(pos, x, y, z, 0);
+                    block = GetBlockAtUnsafe(pos, x, y, z);
                     renderer = Block.GetInstance(block).renderer;
                     if (renderer != null)
                         renderer.Render(mesh, this, pos, x, y, z);

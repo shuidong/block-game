@@ -5,7 +5,7 @@ public class RenderFullBlock : IRenderBlock
 {
     private TextureLayout layout;
     private Color color;
-    private bool smoothLighting = false;
+    private bool smoothLighting = true;
 
     public RenderFullBlock (TextureLayout tex, Color color)
     {
