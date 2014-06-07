@@ -30,6 +30,10 @@ public class World
     private List<ChunkRenderTask> renderQueue = new List<ChunkRenderTask>();
     private List<ColumnSaveTask> saveQueue = new List<ColumnSaveTask>();
 
+    // cache recently accessed column
+    Column cachedColumn;
+    Vector2i cachedPosition;
+
     /** Initialize a world with a 'name' and a 'worldType'. The 'worldType' is used to determine the kind of terrain generation in the world */
     public World(string saveName, TerrainType worldType)
     {
@@ -50,7 +54,7 @@ public class World
     /** Given a rectangle with corners 'min' and 'max', load all the chunks within the rectangle and unload all the chunks not within the rectangle */
     public void LoadInRange(Vector2i min, Vector2i max)
     {
-        
+
         // helper variables
         int xMin = min.x;
         int zMin = min.z;
@@ -63,8 +67,7 @@ public class World
 
         // timing
         System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-        long removalTime, generateTime, renderTime;
-        watch.Start();
+        long generateTime, renderTime;
 
         // mark positions for removal
         foreach (Vector2i pos in loadedData.Keys)
@@ -97,8 +100,6 @@ public class World
         }
 
         // timing
-        watch.Stop();
-        removalTime = watch.ElapsedMilliseconds;
         watch.Start();
 
         // mark positions for addition
@@ -120,16 +121,16 @@ public class World
         // add columns within range
         foreach (Vector2i pos in addition)
         {
+            // load from file if available
+            Column col = Load(pos);
+
+            // generate terrain
+            if (col == null)
+                col = TerrainGen.Generate(worldType, pos);
+
+            // add to loaded world
             lock (this)
             {
-                // load from file if available
-                Column col = Load(pos);
-
-                // generate terrain
-                if (col == null)
-                    col = TerrainGen.Generate(worldType, pos);
-
-                // add to loaded world
                 loadedData.Add(pos, col);
             }
         }
@@ -137,6 +138,7 @@ public class World
         // timing
         watch.Stop();
         generateTime = watch.ElapsedMilliseconds;
+        watch.Reset();
         watch.Start();
 
         // mark positions for render
@@ -173,7 +175,8 @@ public class World
         // timing
         watch.Stop();
         renderTime = watch.ElapsedMilliseconds;
-        Debug.Log(System.String.Format("Remove: {0}s | Generate: {1}s | Render {2}s", removalTime / 1000d, generateTime / 1000d, renderTime / 1000d));
+        watch.Reset();
+        Debug.Log(System.String.Format("Generate: {0}s | Render {1}s", generateTime / 1000d, renderTime / 1000d));
     }
 
     /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
@@ -193,10 +196,6 @@ public class World
         localY += chunkPos.y * CHUNK_SIZE;
         return GetBlockAt(colPos, localX, localY, localZ, def);
     }
-
-    // Variables to cache recently accessed column
-    Column cachedColumn;
-    Vector2i cachedPosition;
 
     /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
     public ushort GetBlockAt(Vector2i colPos, int localX, int localY, int localZ, ushort def)
@@ -223,7 +222,7 @@ public class World
             {
                 return cachedColumn.blockID[localX, localY, localZ];
             }
-            
+
             // find the column and cache before returning
             Column col;
             if (loadedData.TryGetValue(colPos, out col))
@@ -277,10 +276,19 @@ public class World
         // return the light level at this column, or default
         lock (this)
         {
+            // try to use the cached col
+            if (cachedColumn != null && cachedPosition.Equals(colPos))
+            {
+                return cachedColumn.lightLevel[localX, localY, localZ];
+            }
+
+            // find the column and cache before returning
             Column col;
             if (loadedData.TryGetValue(colPos, out col))
             {
-                // return the block
+                // return the light
+                cachedPosition = colPos;
+                cachedColumn = col;
                 return col.lightLevel[localX, localY, localZ];
             }
             else
