@@ -200,12 +200,6 @@ public class World
     /** Return the block ID at the position (localX, localY, localZ) in the column at colPos. If the position is not currently loaded, return def */
     public ushort GetBlockAt(Vector2i colPos, int localX, int localY, int localZ, ushort def)
     {
-        // if Y is out of bounds return something sensible
-        if (localY >= WORLD_HEIGHT * CHUNK_SIZE)
-            return Block.AIR;
-        if (localY < 0)
-            return Block.BEDROCK;
-
         // if other coords are out of bounds find another chunk
         if (localX < 0 || localZ < 0 || localX >= CHUNK_SIZE || localZ >= CHUNK_SIZE)
         {
@@ -213,6 +207,12 @@ public class World
             int worldZ = colPos.z * CHUNK_SIZE + localZ;
             return GetBlockAt(worldX, localY, worldZ, def);
         }
+
+        // if Y is out of bounds return something sensible
+        if (localY >= WORLD_HEIGHT * CHUNK_SIZE)
+            return Block.AIR;
+        if (localY < 0)
+            return Block.BEDROCK;
 
         // return the block id at this column, or default
         lock (this)
@@ -536,12 +536,6 @@ public class World
     {
         MeshBuildInfo info = RenderChunk(task.pos);
         lock (updateQueue) updateQueue.Add(new ChunkUpdateTask(task.pos, info));
-    }
-
-    /** Save a column to disk */
-    public void PerformSaveTask(ColumnSaveTask task)
-    {
-
     }
 
     /** Generate the mesh for a specified column */
