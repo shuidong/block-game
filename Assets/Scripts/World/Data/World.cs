@@ -24,8 +24,8 @@ public class World
     private List<Vector2i> renderedData;
 
     // thread communication
-    private List<ColumnLoadTask> loadQueue = new List<ColumnLoadTask>();
-    private List<ColumnUnloadTask> unloadQueue = new List<ColumnUnloadTask>();
+    private List<ColumnInstantiateTask> instantiateQueue = new List<ColumnInstantiateTask>();
+    private List<ColumnDestroyTask> unloadQueue = new List<ColumnDestroyTask>();
     private List<ChunkUpdateTask> updateQueue = new List<ChunkUpdateTask>();
     private List<ChunkRenderTask> renderQueue = new List<ChunkRenderTask>();
     private List<ColumnSaveTask> saveQueue = new List<ColumnSaveTask>();
@@ -51,28 +51,106 @@ public class World
         renderedData = new List<Vector2i>();
     }
 
-    /** Given a rectangle with corners 'min' and 'max', load all the chunks within the rectangle and unload all the chunks not within the rectangle */
-    public void LoadInRange(Vector2i min, Vector2i max)
+    /** Given a rectangle with corners 'min' and 'max', load 'count' columns within the rectangle, prioritizing the ones closer to the center */
+    public void LoadNextColsInRange(Vector2i min, Vector2i max, int count)
     {
-
         // helper variables
         int xMin = min.x;
         int zMin = min.z;
         int xMax = max.x;
         int zMax = max.z;
         Vector2i center = new Vector2i((xMin + xMax) / 2, (zMin + zMax) / 2);
-        List<Vector2i> removal = new List<Vector2i>();
+        List<Vector2i> candidates = new List<Vector2i>();
         List<Vector2i> addition = new List<Vector2i>();
         List<Vector2i> render = new List<Vector2i>();
 
-        // timing
-        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-        long generateTime, renderTime;
+        // build an ordered list of all the col positions
+        for (int x = xMin; x <= xMax; x++)
+        {
+            for (int z = zMin; z <= zMax; z++)
+            {
+                candidates.Add(new Vector2i(x, z));
+            }
+        }
+        candidates.Sort(new Vector2i.DistanceComparer(center));
+
+        // pick the next ones to render
+        foreach (Vector2i pos in candidates)
+        {
+            lock (this)
+            {
+                if (!renderedData.Contains(pos))
+                {
+                    render.Add(pos);
+                    if (render.Count >= count)
+                        break;
+                }
+            }
+        }
+
+        // pick the columns we need to load to support the render picks
+        foreach (Vector2i pos in render)
+        {
+            for (int x = pos.x - 1; x <= pos.x + 1; x++)
+            {
+                for (int z = pos.z - 1; z <= pos.z + 1; z++)
+                {
+                    Vector2i loadPos = new Vector2i(x, z);
+                    lock (this)
+                    {
+                        if (!loadedData.ContainsKey(loadPos) && !addition.Contains(loadPos))
+                        {
+                            addition.Add(loadPos);
+                        }
+                    }
+                }
+            }
+        }
+
+        // load columns
+        foreach (Vector2i pos in addition)
+        {
+            // load from file if available
+            Column col = Load(pos);
+
+            // generate terrain
+            if (col == null)
+                col = TerrainGen.Generate(worldType, pos);
+
+            // add to loaded world
+            lock (this)
+            {
+                loadedData.Add(pos, col);
+            }
+        }
+
+        // render columns and queue for mesh update
+        foreach (Vector2i pos in render)
+        {
+            // notify main thread
+            if (pos.x >= xMin && pos.z >= zMin && pos.x <= xMax && pos.z <= zMax)
+            {
+                ColumnInstantiateTask loadTask = new ColumnInstantiateTask(pos, RenderColumn(pos));
+                lock (instantiateQueue) instantiateQueue.Add(loadTask);
+                lock (this) renderedData.Add(pos);
+            }
+        }
+    }
+
+    /** Given a rectangle with corners 'min' and 'max', unload all the chunks not within the rectangle */
+    public void UnloadInRange(Vector2i min, Vector2i max)
+    {
+        // helper variables
+        int xMin = min.x;
+        int zMin = min.z;
+        int xMax = max.x;
+        int zMax = max.z;
+        List<Vector2i> removal = new List<Vector2i>();
 
         // mark positions for removal
         foreach (Vector2i pos in loadedData.Keys)
         {
-            if (pos.x < xMin - 1 || pos.z < zMin - 1 || pos.x > xMax + 1 || pos.z > zMax + 1)
+            if (pos.x < xMin || pos.z < zMin || pos.x > xMax || pos.z > zMax)
             {
                 removal.Add(pos);
             }
@@ -90,7 +168,7 @@ public class World
         // call removal events
         foreach (Vector2i pos in removal)
         {
-            ColumnUnloadTask task = new ColumnUnloadTask(pos);
+            ColumnDestroyTask task = new ColumnDestroyTask(pos);
             bool contains;
             lock (this) contains = renderedData.Remove(pos);
             if (contains)
@@ -98,85 +176,6 @@ public class World
                 lock (unloadQueue) unloadQueue.Add(task);
             }
         }
-
-        // timing
-        watch.Start();
-
-        // mark positions for addition
-        for (int x = xMin - 1; x <= xMax + 1; x++)
-        {
-            for (int z = zMin - 1; z <= zMax + 1; z++)
-            {
-                Vector2i pos = new Vector2i(x, z);
-                lock (this)
-                {
-                    if (!loadedData.ContainsKey(pos))
-                    {
-                        addition.Add(pos);
-                    }
-                }
-            }
-        }
-
-        // add columns within range
-        foreach (Vector2i pos in addition)
-        {
-            // load from file if available
-            Column col = Load(pos);
-
-            // generate terrain
-            if (col == null)
-                col = TerrainGen.Generate(worldType, pos);
-
-            // add to loaded world
-            lock (this)
-            {
-                loadedData.Add(pos, col);
-            }
-        }
-
-        // timing
-        watch.Stop();
-        generateTime = watch.ElapsedMilliseconds;
-        watch.Reset();
-        watch.Start();
-
-        // mark positions for render
-        for (int x = xMin; x <= xMax; x++)
-        {
-            for (int z = zMin; z <= zMax; z++)
-            {
-                Vector2i pos = new Vector2i(x, z);
-                lock (this)
-                {
-                    if (!renderedData.Contains(pos))
-                    {
-                        render.Add(pos);
-                    }
-                }
-            }
-        }
-
-        // sort render queue by distance
-        render.Sort(new Vector2i.DistanceComparer(center));
-
-        // render and queue for mesh update
-        foreach (Vector2i pos in render)
-        {
-            // notify main thread
-            if (pos.x >= xMin && pos.z >= zMin && pos.x <= xMax && pos.z <= zMax)
-            {
-                ColumnLoadTask loadTask = new ColumnLoadTask(pos, RenderColumn(pos));
-                lock (loadQueue) loadQueue.Add(loadTask);
-                lock (this) renderedData.Add(pos);
-            }
-        }
-
-        // timing
-        watch.Stop();
-        renderTime = watch.ElapsedMilliseconds;
-        watch.Reset();
-        Debug.Log(System.String.Format("Generate: {0}s | Render {1}s", generateTime / 1000d, renderTime / 1000d));
     }
 
     /** Return the block ID at the position (worldX, worldY, worldZ). If the position is not currently loaded, return def */
@@ -678,15 +677,15 @@ public class World
         return saveDir + "" + pos.x + "_" + pos.z + ".column";
     }
 
-    /** Return the next column that should be loaded */
-    public ColumnLoadTask GetNextLoadColumn()
+    /** Return the next column that should be added to the scene */
+    public ColumnInstantiateTask GetNextInstantiateColumn()
     {
-        lock (loadQueue)
+        lock (instantiateQueue)
         {
-            if (loadQueue.Count > 0)
+            if (instantiateQueue.Count > 0)
             {
-                ColumnLoadTask result = loadQueue[0];
-                loadQueue.RemoveAt(0);
+                ColumnInstantiateTask result = instantiateQueue[0];
+                instantiateQueue.RemoveAt(0);
                 return result;
             }
             else
@@ -696,14 +695,14 @@ public class World
         }
     }
 
-    /** Return the next column that should be unloaded */
-    public ColumnUnloadTask GetNextUnloadColumn()
+    /** Return the next column that should be removed from the scene */
+    public ColumnDestroyTask GetNextDestroyColumn()
     {
         lock (unloadQueue)
         {
             if (unloadQueue.Count > 0)
             {
-                ColumnUnloadTask result = unloadQueue[0];
+                ColumnDestroyTask result = unloadQueue[0];
                 unloadQueue.RemoveAt(0);
                 return result;
             }
@@ -714,7 +713,7 @@ public class World
         }
     }
 
-    /** Return the next chunk that should be updated */
+    /** Return the next chunk that needs to apply its new mesh*/
     public ChunkUpdateTask GetNextUpdateChunk()
     {
         lock (updateQueue)
@@ -732,7 +731,7 @@ public class World
         }
     }
 
-    /** Return the next chunk that should be rendered */
+    /** Return the next chunk that should have a new mesh generated */
     public ChunkRenderTask GetNextRenderChunk()
     {
         lock (renderQueue)
@@ -750,7 +749,7 @@ public class World
         }
     }
 
-    /** Return the next chunk that should be rendered */
+    /** Return the next chunk that should be saved to disk */
     public ColumnSaveTask GetNextSaveColumn()
     {
         lock (saveQueue)

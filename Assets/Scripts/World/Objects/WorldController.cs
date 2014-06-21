@@ -58,19 +58,19 @@ public class WorldController : MonoBehaviour
             playerPos = player.position;
 
         // unload far chunks
-        ColumnUnloadTask unload;
+        ColumnDestroyTask unload;
         do
         {
-            unload = world.GetNextUnloadColumn();
+            unload = world.GetNextDestroyColumn();
             if (unload != null)
                 DestroyChunk(unload.pos);
         } while (unload != null);
 
         // load near chunks
-        ColumnLoadTask load;
+        ColumnInstantiateTask load;
         do
         {
-            load = world.GetNextLoadColumn();
+            load = world.GetNextInstantiateColumn();
             if (load != null)
                 InstantiateChunk(load.pos, load.meshes);
         } while (load != null);
@@ -151,20 +151,35 @@ public class WorldController : MonoBehaviour
         }
     }
 
+    private const float UNLOAD_INTERVAL_SECONDS = 1;
     void ThreadLoadChunksAroundPlayer()
     {
         try
         {
+            long lastTime = System.DateTime.Now.Ticks;
             while (isPlaying)
             {
+                // get range
                 Vector2i center;
                 lock (playerPosLock)
                     center = MiscMath.WorldToColumnCoords(playerPos.x, playerPos.z);
                 Vector2i offset = new Vector2i(loadDistance, loadDistance);
                 Vector2i min = center - offset;
                 Vector2i max = center + offset;
-                world.LoadInRange(min, max);
-                Thread.Sleep(1000);
+
+                // load a chunk
+                world.LoadNextColsInRange(min, max, 5);
+
+                // unload chunks every interval
+                long currentTime = System.DateTime.Now.Ticks;
+                if (currentTime - lastTime >= UNLOAD_INTERVAL_SECONDS * 10000000)
+                {
+                    Vector2i one = new Vector2i(1, 1);
+                    world.UnloadInRange(min - one, max + one);
+                    lastTime = currentTime;
+                }
+
+                Thread.Sleep(1);
             }
         }
         catch (System.Exception e)

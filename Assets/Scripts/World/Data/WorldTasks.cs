@@ -1,23 +1,23 @@
 using UnityEngine;
 using System.Collections;
 
-public class ColumnLoadTask
+public class ColumnInstantiateTask
 {
     public Vector2i pos;
     public MeshBuildInfo[] meshes;
 
-    public ColumnLoadTask(Vector2i pos, MeshBuildInfo[] meshes)
+    public ColumnInstantiateTask(Vector2i pos, MeshBuildInfo[] meshes)
     {
         this.pos = pos;
         this.meshes = meshes;
     }
 }
 
-public class ColumnUnloadTask
+public class ColumnDestroyTask
 {
     public Vector2i pos;
 
-    public ColumnUnloadTask(Vector2i pos)
+    public ColumnDestroyTask(Vector2i pos)
     {
         this.pos = pos;
     }
