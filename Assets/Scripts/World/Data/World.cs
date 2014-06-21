@@ -218,7 +218,7 @@ public class World
         lock (this)
         {
             // try to use the cached col
-            if (cachedColumn != null && cachedPosition.Equals(colPos))
+            if (cachedPosition.Equals(colPos) && cachedColumn != null)
             {
                 return cachedColumn.blockID[localX, localY, localZ];
             }
