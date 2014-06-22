@@ -1,4 +1,4 @@
-﻿Shader "Custom/VertexColorUnlit" {
+Shader "Custom/VertexColorUnlit" {
     Properties {
         _MainTex ("Texture", 2D) = "white" {}
     }
