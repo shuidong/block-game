@@ -2064,6 +2064,10 @@ Prefab:
       propertyPath: m_BackGroundColor.b
       value: .807843149
       objectReference: {fileID: 0}
+    - target: {fileID: 11400066, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
+      propertyPath: range
+      value: 100000
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 9c2cc0d40b69c48118fbf7b657c18b55, type: 2}
   m_RootGameObject: {fileID: 1948491181}
@@ -2083,6 +2087,7 @@ GameObject:
   - 114: {fileID: 1948491184}
   - 114: {fileID: 1948491188}
   - 114: {fileID: 1948491183}
+  - 114: {fileID: 1948491189}
   m_Layer: 2
   m_Name: Player
   m_TagString: Player
@@ -2241,6 +2246,20 @@ MonoBehaviour:
   worldObject: {fileID: 1999134240}
   radius: 5
   collisionMaker: {fileID: 0}
+--- !u!114 &1948491189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 11400066, guid: 9c2cc0d40b69c48118fbf7b657c18b55,
+    type: 2}
+  m_PrefabInternal: {fileID: 1898366137}
+  m_GameObject: {fileID: 1948491181}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53ce91fbe9c7cbb40b7c89995453be52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  key: 116
+  range: 100000
 --- !u!1 &1999134239
 GameObject:
   m_ObjectHideFlags: 0
