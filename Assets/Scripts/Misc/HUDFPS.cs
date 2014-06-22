@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 [AddComponentMenu( "Utilities/HUDFPS")]
@@ -26,6 +26,7 @@ public class HUDFPS : MonoBehaviour
 	private Color color = Color.white; // The color of the GUI, depending of the FPS ( R < 10, Y < 30, G >= 30 )
 	private string sFPS = ""; // The fps formatted into a string.
 	private GUIStyle style; // The style the text will be displayed at, based en defaultSkin.label.
+    private int windowID;
 	
 	void Start()
 	{
@@ -63,16 +64,18 @@ public class HUDFPS : MonoBehaviour
 		if( style == null ){
 			style = new GUIStyle( GUI.skin.label );
 			style.normal.textColor = Color.white;
+            style.padding = new RectOffset(8, 8, 20, 8);
 			style.alignment = TextAnchor.MiddleCenter;
+            windowID = System.Guid.NewGuid().GetHashCode();
 		}
 		
 		GUI.color = updateColor ? color : Color.white;
-		startRect = GUI.Window(0, startRect, DoMyWindow, "");
+		startRect = GUI.Window(windowID, startRect, DoMyWindow, "FPS");
 	}
 	
 	void DoMyWindow(int windowID)
 	{
-		GUI.Label( new Rect(0, 0, startRect.width, startRect.height), sFPS + " FPS", style );
+		GUI.Label( new Rect(0, 0, startRect.width, startRect.height), sFPS, style );
 		if( allowDrag ) GUI.DragWindow(new Rect(0, 0, Screen.width, Screen.height));
 	}
 }

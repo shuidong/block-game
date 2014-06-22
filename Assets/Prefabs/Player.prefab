@@ -1602,6 +1602,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: 116
   range: 100000
+  startRect:
+    serializedVersion: 2
+    x: 150
+    y: 50
+    width: 125
+    height: 100
+  allowDrag: 1
 --- !u!120 &12000000
 LineRenderer:
   m_ObjectHideFlags: 1
