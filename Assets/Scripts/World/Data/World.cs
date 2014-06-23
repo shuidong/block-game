@@ -665,8 +665,9 @@ public class World
         {
             foreach (Vector2i pos in renderedData)
             {
-                Column col = loadedData[pos];
-                col.TickBlock(this, pos);
+                Column col;
+                if(loadedData.TryGetValue(pos, out col))
+                    col.TickBlock(this, pos);
             }
         }
     }

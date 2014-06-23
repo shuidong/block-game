@@ -4,7 +4,9 @@ using M = System.Math;
 
 public class TerrainGen
 {
-    const int WORLD_SCALE = 50;
+    const int WORLD_SCALE = 50; // 50
+    const double WORLD_HEIGHT_SCALE = 1; // 1
+    const int WORLD_SEA_LEVEL = 75;
 
     /** Generate a column at the specified position of a world of the specified type */
     public static Column Generate(TerrainType type, Vector2i colPos)
@@ -72,13 +74,17 @@ public class TerrainGen
                 int worldZ = z + zOffset;
 
                 // terrain values
-                double hilliness = Hilliness(worldX, worldZ);
-                double height = Height(worldX, worldZ);
-                int stoneHeight = 100 + (int)(height * hilliness);
+                double hills = Hills(worldX, worldZ) * HillScale(worldX, worldZ);
+                int elevation = Elevation(worldX, worldZ);
                 double[] layers = StoneLayers(worldX, worldZ, numStoneLayers);
-                int dirtHeight = 100 + Dirt(worldX, worldZ) + (int)(height * hilliness * .9);
-                int rockyDirtHeight = stoneHeight >= dirtHeight ? 100 + Dirt(worldX, worldZ) + (int)(height * hilliness * .93) : 0;
+                int dirt = Dirt(worldX, worldZ);
                 double humidity = col.humidity[x, z];
+
+                // terrain heights
+                int stoneHeight = (int)(WORLD_HEIGHT_SCALE * (elevation + hills));
+                int dirtHeight = (int)(WORLD_HEIGHT_SCALE * (elevation + dirt + hills * .9));
+                int rockyDirtHeight = (int)(WORLD_HEIGHT_SCALE * (stoneHeight >= dirtHeight ? elevation + dirt + hills * .93 : 0));
+                int seaLevel = (int)(WORLD_HEIGHT_SCALE * WORLD_SEA_LEVEL);
 
                 // build the blocks
                 int maxHeight = 0;
@@ -96,17 +102,36 @@ public class TerrainGen
                             stoneType++;
                         id = Block.STONE[numStoneLayers - 1 - stoneType];
                     }
-                    else if (y < dirtHeight)
+                    else if (y <= dirtHeight)
                     {
-                        id = !desert ? Block.DIRT : Block.SAND;
-                    }
-                    else if (y == dirtHeight)
-                    {
-                        id = !desert ? Block.GRASS : Block.SAND;
+                        if (dirtHeight < seaLevel - 1)
+                        {
+                            id = Block.STONE[0]; // ocean floor
+                        }
+                        else if (dirtHeight < seaLevel + 2)
+                        {
+                            id = Block.SAND; // beaches
+                        }
+                        else if (desert)
+                        {
+                            id = Block.SAND; // deserts
+                        }
+                        else if (y < dirtHeight)
+                        {
+                            id = Block.DIRT; // dirt under grass
+                        }
+                        else
+                        {
+                            id = Block.GRASS; // grass on top of dirt
+                        }
                     }
                     else if (y < rockyDirtHeight)
                     {
                         id = Block.ROCKY_DIRT;
+                    }
+                    else if (y < seaLevel)
+                    {
+                        id = Block.AIR; // placeholder for water
                     }
 
                     // place block
@@ -124,19 +149,28 @@ public class TerrainGen
         }
     }
 
-    private static double Hilliness(int x, int z)
+    private static double HillScale(int x, int z)
     {
         return M.Pow(M.Abs(4.8 * (PerlinNoise(x, -1000, z, 15 * WORLD_SCALE, 2, 1) - 1)), 3);
     }
 
-    private static double Height(int x, int z)
+    private static double Hills(int x, int z)
     {
         int scale = WORLD_SCALE * 2;
-        double a = PerlinNoise(x, 0000, z, scale, 1, 1);
-        double b = PerlinNoise(x, 1000, z, scale, 1, 1);
-        double c = PerlinNoise(x, 2000, z, scale, 1, 1);
-        double d = PerlinNoise(x, 3000, z, scale, 1, 1);
+        double min = .1;
+        double a = min + PerlinNoise(x, 0000, z, scale, 1 - min, 1);
+        double b = min + PerlinNoise(x, 1000, z, scale, 1 - min, 1);
+        double c = min + PerlinNoise(x, 2000, z, scale, 1 - min, 1);
+        double d = min + PerlinNoise(x, 3000, z, scale, 1 - min, 1);
         return Max(Min(Combine(x, z, a, b), Combine(z, x, c, d)), Min(Combine(x, z, c, b), Combine(z, x, a, d)));
+    }
+
+    private static int Elevation(int x, int z)
+    {
+        int baseElevation = 90;
+        double rollingHills = PerlinNoise(x, -2000, z, 5 * WORLD_SCALE, 20, 1);
+        double continents = PerlinNoise(x, -3000, z, 25 * WORLD_SCALE, -75, 1);
+        return baseElevation + (int)(rollingHills + continents);
     }
 
     public static double[] StoneLayers(int x, int z, int count)
@@ -161,7 +195,7 @@ public class TerrainGen
 
     public static int Dirt(int x, int z)
     {
-        return 3 + (int)PerlinNoise(x, 4000, z, WORLD_SCALE / 2, 3, 1);
+        return 3 + (int)PerlinNoise(x, 4000, z, WORLD_SCALE, 3, 1);
     }
 
     #endregion
@@ -178,6 +212,11 @@ public class TerrainGen
             {
                 int worldX = x + xOffset;
                 int worldZ = z + zOffset;
+
+                for (int y = 0; y < worldHeight; y++)
+                {
+
+                }
             }
         }
     }
@@ -246,6 +285,5 @@ public class TerrainGen
 
 public enum TerrainType
 {
-    MAINWORLD,
-    CAVEWORLD
+    MAINWORLD
 }
