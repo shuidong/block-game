@@ -6,9 +6,11 @@ public abstract class Block
     // block ids
     public static readonly ushort AIR = 0;
     public static readonly ushort BEDROCK = 1;
-    public static readonly ushort DIRT = 2;
-    public static readonly ushort GRASS = 3;
-    public static readonly ushort[] STONE = { 4, 5, 6, 7, 8 };
+    public static readonly ushort[] STONE = { 2, 3, 4, 5, 6 };
+    public static readonly ushort DIRT = 7;
+    public static readonly ushort GRASS = 8;
+    public static readonly ushort ROCKY_DIRT = 9;
+    public static readonly ushort SAND = 10;
 
     // array of instances of all block types
     private static Block[] blocks;
@@ -19,10 +21,12 @@ public abstract class Block
         blocks = new Block[ushort.MaxValue + 1];
         blocks[AIR] = new BlockAir();
         blocks[BEDROCK] = new BlockBedrock();
-        blocks[DIRT] = new BlockDirt();
-        blocks[GRASS] = new BlockGrass();
         for (uint i = 0; i < STONE.Length; i++)
             blocks[STONE[i]] = new BlockStone(i);
+        blocks[DIRT] = new BlockDirt();
+        blocks[GRASS] = new BlockGrass();
+        blocks[ROCKY_DIRT] = new BlockDirtStone();
+        blocks[SAND] = new BlockSand();
     }
 
     /** Get an instance of Block corresponding to the ID given */

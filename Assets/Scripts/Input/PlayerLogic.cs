@@ -5,7 +5,7 @@ public class PlayerLogic : MonoBehaviour
 {
     private GameObject cameraObject;
     private World world;
-    private ushort held = Block.STONE[0];
+    private ushort held = Block.SAND;
 
     // editor params
     public TextMesh blockIndicator;

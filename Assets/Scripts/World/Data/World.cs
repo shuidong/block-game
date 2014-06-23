@@ -11,7 +11,7 @@ using System.Reflection;
 public class World
 {
     // global world constants
-    public const int CHUNK_SIZE = 15;
+    public const int CHUNK_SIZE = 16;
     public const int WORLD_HEIGHT = 16;
 
     // basic world info

@@ -10,6 +10,8 @@ public class Column : ISerializable
     // column data
     public ushort[, ,] blockID = new ushort[World.CHUNK_SIZE, World.CHUNK_SIZE * World.WORLD_HEIGHT, World.CHUNK_SIZE];
     public byte[, ,] lightLevel = new byte[World.CHUNK_SIZE, World.CHUNK_SIZE * World.WORLD_HEIGHT, World.CHUNK_SIZE];
+    public float[,] humidity = new float[World.CHUNK_SIZE, World.CHUNK_SIZE];
+    public float[,] temperature = new float[World.CHUNK_SIZE, World.CHUNK_SIZE];
 
     // cached stuff for optimization
     public int maxHeight;
@@ -18,6 +20,8 @@ public class Column : ISerializable
     private const string KEY_BLOCK_IDS = "BlockIDArray";
     private const string KEY_LIGHT_LEVELS = "LightLevelArray";
     private const string KEY_CACHE_MAX_HEIGHT = "CachedMaximumHeight";
+    private const string KEY_HUMIDITY = "HumidityArray";
+    private const string KEY_TEMPERATURE = "TemperatureArray";
 
     /** Crate an empty column */
     public Column()
@@ -36,6 +40,8 @@ public class Column : ISerializable
             blockID = (ushort[, ,])info.GetValue(KEY_BLOCK_IDS, typeof(ushort[, ,]));
             lightLevel = (byte[, ,])info.GetValue(KEY_LIGHT_LEVELS, typeof(byte[, ,]));
             maxHeight = (int)info.GetValue(KEY_CACHE_MAX_HEIGHT, typeof(int));
+            humidity = (float[,])info.GetValue(KEY_HUMIDITY, typeof(float[,]));
+            temperature = (float[,])info.GetValue(KEY_TEMPERATURE, typeof(float[,]));
         }
         else
         {
@@ -50,6 +56,8 @@ public class Column : ISerializable
         info.AddValue(KEY_BLOCK_IDS, blockID);
         info.AddValue(KEY_LIGHT_LEVELS, lightLevel);
         info.AddValue(KEY_CACHE_MAX_HEIGHT, maxHeight);
+        info.AddValue(KEY_HUMIDITY, humidity);
+        info.AddValue(KEY_TEMPERATURE, temperature);
     }
 
     /** Randomly tick one block in this column */
