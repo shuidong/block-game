@@ -23,6 +23,7 @@ public class WorldController : MonoBehaviour
     // instantiated chunks
     Dictionary<Vector3i, ChunkRenderer> opaqueInstances = new Dictionary<Vector3i, ChunkRenderer>();
     Dictionary<Vector3i, ChunkRenderer> transparentInstances = new Dictionary<Vector3i, ChunkRenderer>();
+    List<ChunkRenderer> pooledInstances = new List<ChunkRenderer>();
 
     void Awake()
     {
@@ -193,8 +194,7 @@ public class WorldController : MonoBehaviour
                 long currentTime = System.DateTime.Now.Ticks;
                 if (currentTime - lastTime >= UNLOAD_INTERVAL_SECONDS * 10000000)
                 {
-                    Vector2i one = new Vector2i(1, 1);
-                    world.UnloadInRange(min - one, max + one);
+                    world.UnloadInRange(min, max);
                     lastTime = currentTime;
                 }
 
@@ -221,22 +221,45 @@ public class WorldController : MonoBehaviour
             Vector3 position = new Vector3(worldX, worldY, worldZ);
             Quaternion rotation = Quaternion.identity;
 
-            // instantiate opaque
-            GameObject opaqueObj = Instantiate(chunkPrefab, position, rotation) as GameObject;
-            opaqueInstances.Add(new Vector3i(pos.x, y, pos.z), opaqueObj.GetComponent<ChunkRenderer>());
-            opaqueObj.transform.parent = transform;
-            opaqueObj.name = System.String.Format("Opaque Chunk at ({0}, {1}, {2})", pos.x, y, pos.z);
-            meshes[y].opaque.ApplyToMesh(opaqueObj.GetComponent<MeshFilter>().mesh);
-            opaqueObj.renderer.material = opaqueMaterial;
-
-            // instantiate transparent
-            GameObject transparentObj = Instantiate(chunkPrefab, position, rotation) as GameObject;
-            transparentInstances.Add(new Vector3i(pos.x, y, pos.z), transparentObj.GetComponent<ChunkRenderer>());
-            transparentObj.transform.parent = transform;
-            transparentObj.name = System.String.Format("Transparent Chunk at ({0}, {1}, {2})", pos.x, y, pos.z);
-            meshes[y].transparent.ApplyToMesh(transparentObj.GetComponent<MeshFilter>().mesh);
-            transparentObj.renderer.material = transparentMaterial;
+            // instantiate
+            string name = System.String.Format(" Chunk at ({0}, {1}, {2})", pos.x, y, pos.z);
+            ChunkRenderer opaque = MakeChunk(position, "Opaque" + name, meshes[y].opaque, opaqueMaterial);
+            ChunkRenderer transparent = MakeChunk(position, "Transparent" + name, meshes[y].transparent, transparentMaterial);
+            Vector3i chunkPos = new Vector3i(pos.x, y, pos.z);
+            opaqueInstances.Add(chunkPos, opaque);
+            transparentInstances.Add(chunkPos, transparent);
         }
+    }
+
+    ChunkRenderer MakeChunk(Vector3 scenePosition, string name, SingleMeshBuildInfo meshInfo, Material material)
+    {
+        GameObject obj;
+        ChunkRenderer comp;
+        MeshFilter filter;
+        
+        // create or reuse gameobject
+        if (pooledInstances.Count > 0)
+        {
+            comp = pooledInstances[0];
+            obj = comp.gameObject;
+            obj.transform.position = scenePosition;
+            pooledInstances.RemoveAt(0);
+            obj.SetActive(true);
+        }
+        else
+        {
+            obj = Instantiate(chunkPrefab, scenePosition, Quaternion.identity) as GameObject;
+            obj.transform.parent = transform;
+            comp = obj.GetComponent<ChunkRenderer>();
+        }
+        filter = obj.GetComponent<MeshFilter>();
+
+        // apply new settings
+        obj.name = name;
+        meshInfo.ApplyToMesh(filter.mesh);
+        obj.renderer.material = material;
+
+        return comp;
     }
 
     void DestroyChunk(Vector2i pos)
@@ -244,9 +267,13 @@ public class WorldController : MonoBehaviour
         for (int y = 0; y < World.WORLD_HEIGHT; y++)
         {
             Vector3i chunkPos = new Vector3i(pos.x, y, pos.z);
-            Destroy(opaqueInstances[chunkPos].gameObject);
+
+            opaqueInstances[chunkPos].gameObject.SetActive(false);
+            pooledInstances.Add(opaqueInstances[chunkPos]);
             opaqueInstances.Remove(chunkPos);
-            Destroy(transparentInstances[chunkPos].gameObject);
+            
+            transparentInstances[chunkPos].gameObject.SetActive(false);
+            pooledInstances.Add(transparentInstances[chunkPos]);
             transparentInstances.Remove(chunkPos);
         }
     }

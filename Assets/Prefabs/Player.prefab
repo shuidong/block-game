@@ -1623,7 +1623,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   normal:
-    distanceOrDensity: .5
+    distanceOrDensity: .800000012
     mode: 1
     color: {r: .576470613, g: .647058845, b: .807843149, a: 1}
     skybox: {fileID: 0}
