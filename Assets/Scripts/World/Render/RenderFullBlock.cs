@@ -15,6 +15,8 @@ public class RenderFullBlock : IRenderBlock
 
     public void Render (MeshBuildInfo current, World world, Vector3i chunkPos, int x, int y, int z)
     {
+        SingleMeshBuildInfo opaque = current.opaque;
+
         Vector3 center = Vector3.one / 2f;
         Vector3 size = Vector3.one;
         ushort def = Block.DIRT;
@@ -35,7 +37,7 @@ public class RenderFullBlock : IRenderBlock
             } else {
                 l [4] = world.GetLightAt (chunkPos, x, y + 1, z, 0);
             }
-            CubeRenderHelper.CubeTop (current, x, y, z, layout, center, size, l, smoothLighting, blockColor);
+            CubeRenderHelper.CubeTop (opaque, x, y, z, layout, center, size, l, smoothLighting, blockColor);
         }
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y - 1, z, def)).opaque) {
@@ -48,7 +50,7 @@ public class RenderFullBlock : IRenderBlock
             } else {
                 l [4] = world.GetLightAt (chunkPos, x, y - 1, z, 0);
             }
-            CubeRenderHelper.CubeBottom (current, x, y, z, layout, center, size, l, smoothLighting, blockColor);
+            CubeRenderHelper.CubeBottom (opaque, x, y, z, layout, center, size, l, smoothLighting, blockColor);
         }
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x + 1, y, z, def)).opaque) {
@@ -61,7 +63,7 @@ public class RenderFullBlock : IRenderBlock
             } else {
                 l [4] = world.GetLightAt (chunkPos, x + 1, y, z, 0);
             }
-            CubeRenderHelper.CubeEast (current, x, y, z, layout, center, size, l, smoothLighting, blockColor);
+            CubeRenderHelper.CubeEast (opaque, x, y, z, layout, center, size, l, smoothLighting, blockColor);
         }
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x - 1, y, z, def)).opaque) {
@@ -74,7 +76,7 @@ public class RenderFullBlock : IRenderBlock
             } else {
                 l [4] = world.GetLightAt (chunkPos, x - 1, y, z, 0);
             }
-            CubeRenderHelper.CubeWest (current, x, y, z, layout, center, size, l, smoothLighting, blockColor);
+            CubeRenderHelper.CubeWest (opaque, x, y, z, layout, center, size, l, smoothLighting, blockColor);
         }
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z + 1, def)).opaque) {
@@ -87,7 +89,7 @@ public class RenderFullBlock : IRenderBlock
             } else {
                 l [4] = world.GetLightAt (chunkPos, x, y, z + 1, 0);
             }
-            CubeRenderHelper.CubeNorth (current, x, y, z, layout, center, size, l, smoothLighting, blockColor);
+            CubeRenderHelper.CubeNorth (opaque, x, y, z, layout, center, size, l, smoothLighting, blockColor);
         }
         
         if (!Block.GetInstance (world.GetBlockAt (chunkPos, x, y, z - 1, def)).opaque) {
@@ -100,7 +102,7 @@ public class RenderFullBlock : IRenderBlock
             } else {
                 l [4] = world.GetLightAt (chunkPos, x, y, z - 1, 0);
             }
-            CubeRenderHelper.CubeSouth (current, x, y, z, layout, center, size, l, smoothLighting, blockColor);
+            CubeRenderHelper.CubeSouth (opaque, x, y, z, layout, center, size, l, smoothLighting, blockColor);
         }
     }
 }

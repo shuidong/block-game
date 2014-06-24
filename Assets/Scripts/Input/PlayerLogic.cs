@@ -11,6 +11,7 @@ public class PlayerLogic : MonoBehaviour
     public TextMesh blockIndicator;
     public GameObject targetCube;
     public float reach = 4;
+    public FogManager fog;
 
     // capture cursor
     public static bool lockCursor = true;
@@ -70,6 +71,18 @@ public class PlayerLogic : MonoBehaviour
             // did not hit
             blockIndicator.text = "";
             targetCube.SetActive(false);
+        }
+
+        // set fog based on camera position
+        ushort headBlock = WorldInterface.GetBlock(world, Camera.main.transform.position);
+        fog.water = false;
+        foreach (ushort water in Block.WATER)
+        {
+            if (headBlock == water)
+            {
+                fog.water = true;
+                break;
+            }
         }
     }
 }

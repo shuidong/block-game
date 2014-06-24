@@ -367,17 +367,23 @@ public class World
 
                     // sunbeam
                     h = worldY;
+                    byte currentLight = GetLightAt(worldX, h+1, worldZ, 0);
+                    Block hBlock = Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT));
                     do
                     {
-                        SetLightAt(worldX, h, worldZ, CubeRenderHelper.MAX_LIGHT);
+                        SetLightAt(worldX, h, worldZ, currentLight);
+                        if (!hBlock.clear)
+                        {
+                            currentLight--;
+                        }
                         h--;
-                    } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT)).opaque);
+                    } while (h > 0 && !(hBlock = Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT))).opaque);
 
                     // flood
                     h = worldY;
                     do
                     {
-                        FloodFillLight(worldX, h, worldZ, CubeRenderHelper.MAX_LIGHT, true);
+                        FloodFillLight(worldX, h, worldZ, GetLightAt(worldX, h + 1, worldZ, 0), true);
                         h--;
                     } while (h > 0 && !Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT)).opaque);
                 }
@@ -480,7 +486,8 @@ public class World
     /** Generate the mesh for a specified chunk */
     public MeshBuildInfo RenderChunk(Vector3i pos)
     {
-        MeshBuildInfo mesh = new MeshBuildInfo();
+        MeshBuildInfo meshInfo = new MeshBuildInfo();
+
         ushort block;
         IRenderBlock renderer;
 
@@ -493,13 +500,13 @@ public class World
                     block = GetBlockAt(pos, x, y, z, 0);
                     renderer = Block.GetInstance(block).renderer;
                     if (renderer != null)
-                        renderer.Render(mesh, this, pos, x, y, z);
+                        renderer.Render(meshInfo, this, pos, x, y, z);
                 }
             }
         }
 
-        mesh.Build();
-        return mesh;
+        meshInfo.Build();
+        return meshInfo;
     }
 
     /** Render a chunk and queue it for update */

@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: BlocksMaterial
+  m_Name: OpaqueBlocksMaterial
   m_Shader: {fileID: 4800000, guid: ce56c78da45c043408c8fbe953c48eb5, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1

@@ -6,7 +6,7 @@ public class TerrainGen
 {
     const int WORLD_SCALE = 50; // 50
     const double WORLD_HEIGHT_SCALE = 1; // 1
-    const int WORLD_SEA_LEVEL = 75;
+    const int WORLD_SEA_LEVEL = 70;
 
     /** Generate a column at the specified position of a world of the specified type */
     public static Column Generate(TerrainType type, Vector2i colPos)
@@ -65,6 +65,7 @@ public class TerrainGen
     {
         int worldHeight = World.CHUNK_SIZE * World.WORLD_HEIGHT;
         int numStoneLayers = Block.STONE.Length;
+        int numWaterHeights = Block.WATER.Length;
 
         for (int x = 0; x < World.CHUNK_SIZE; x++)
         {
@@ -106,7 +107,7 @@ public class TerrainGen
                     {
                         if (dirtHeight < seaLevel - 1)
                         {
-                            id = Block.STONE[0]; // ocean floor
+                            id = Block.SAND; // sea floor
                         }
                         else if (dirtHeight < seaLevel + 2)
                         {
@@ -131,7 +132,7 @@ public class TerrainGen
                     }
                     else if (y < seaLevel)
                     {
-                        id = Block.AIR; // placeholder for water
+                        id = Block.WATER[numWaterHeights - 1]; // water
                     }
 
                     // place block
@@ -167,10 +168,7 @@ public class TerrainGen
 
     private static int Elevation(int x, int z)
     {
-        int baseElevation = 90;
-        double rollingHills = PerlinNoise(x, -2000, z, 5 * WORLD_SCALE, 20, 1);
-        double continents = PerlinNoise(x, -3000, z, 25 * WORLD_SCALE, -75, 1);
-        return baseElevation + (int)(rollingHills + continents);
+        return 90 + (int) PerlinNoise(x, -3000, z, 25 * WORLD_SCALE, -75, 1);
     }
 
     public static double[] StoneLayers(int x, int z, int count)
@@ -195,7 +193,7 @@ public class TerrainGen
 
     public static int Dirt(int x, int z)
     {
-        return 3 + (int)PerlinNoise(x, 4000, z, WORLD_SCALE, 3, 1);
+        return 3 + (int)PerlinNoise(x, 4000, z, 2.5* WORLD_SCALE, 3, 1);
     }
 
     #endregion
@@ -210,8 +208,8 @@ public class TerrainGen
         {
             for (int z = 0; z < World.CHUNK_SIZE; z++)
             {
-                int worldX = x + xOffset;
-                int worldZ = z + zOffset;
+                //int worldX = x + xOffset;
+                //int worldZ = z + zOffset;
 
                 for (int y = 0; y < worldHeight; y++)
                 {
@@ -235,15 +233,23 @@ public class TerrainGen
         {
             for (int bZ = 0; bZ < World.CHUNK_SIZE; bZ++)
             {
+                byte currentLight = maxLight;
                 for (int y = yMax; y >= 0; y--)
                 {
-                    if (Block.GetInstance(col.blockID[bX, y, bZ]).opaque)
+                    Block block = Block.GetInstance(col.blockID[bX, y, bZ]);
+                    if (block.opaque)
                     {
                         break;
                     }
                     else
                     {
-                        col.lightLevel[bX, y, bZ] = maxLight;
+                        col.lightLevel[bX, y, bZ] = currentLight;
+                        if (!block.clear)
+                        {
+                            currentLight--;
+                            if (currentLight <= 0)
+                                break;
+                        }
                     }
                 }
             }

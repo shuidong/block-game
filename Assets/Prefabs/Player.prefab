@@ -326,6 +326,7 @@ GameObject:
   - 124: {fileID: 12400000}
   - 114: {fileID: 11400048}
   - 81: {fileID: 8100000}
+  - 114: {fileID: 11400068}
   m_Layer: 2
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -576,7 +577,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100040}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 145, z: 0}
+  m_LocalPosition: {x: -7100, y: 200, z: 4000}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 400018}
@@ -1145,6 +1146,7 @@ MonoBehaviour:
   blockIndicator: {fileID: 10200000}
   targetCube: {fileID: 100048}
   reach: 4.5
+  fog: {fileID: 11400068}
 --- !u!114 &11400016
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1609,6 +1611,29 @@ MonoBehaviour:
     width: 125
     height: 75
   allowDrag: 1
+--- !u!114 &11400068
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ccc2072aa8edc44cb5f78427a9b8f2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normal:
+    distanceOrDensity: .5
+    mode: 1
+    color: {r: .576470613, g: .647058845, b: .807843149, a: 1}
+    skybox: {fileID: 0}
+  underwater:
+    distanceOrDensity: .100000001
+    mode: 2
+    color: {r: 0, g: .342039526, b: .596078455, a: 1}
+    skybox: {fileID: 0}
+  controller: {fileID: 0}
+  water: 0
 --- !u!120 &12000000
 LineRenderer:
   m_ObjectHideFlags: 1

@@ -5,5 +5,6 @@ public class BlockAir : Block {
     public BlockAir() {
         name = "Air";
         opaque = false;
+        clear = true;
     }
 }

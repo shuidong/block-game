@@ -11,6 +11,7 @@ public abstract class Block
     public static readonly ushort GRASS = 8;
     public static readonly ushort ROCKY_DIRT = 9;
     public static readonly ushort SAND = 10;
+    public static readonly ushort[] WATER = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 
     // array of instances of all block types
     private static Block[] blocks;
@@ -27,6 +28,8 @@ public abstract class Block
         blocks[GRASS] = new BlockGrass();
         blocks[ROCKY_DIRT] = new BlockDirtStone();
         blocks[SAND] = new BlockSand();
+        for (uint i = 0; i < WATER.Length; i++)
+            blocks[WATER[i]] = new BlockWater(i);
     }
 
     /** Get an instance of Block corresponding to the ID given */
@@ -41,6 +44,9 @@ public abstract class Block
 
     /** Does this block stop light? */
     public bool opaque = true;
+
+    /** Is this block totally clear? */
+    public bool clear = false;
 
     /** How to render this block */
     public IRenderBlock renderer = null;
