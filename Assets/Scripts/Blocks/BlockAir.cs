@@ -6,5 +6,6 @@ public class BlockAir : Block {
         name = "Air";
         opaque = false;
         clear = true;
+        floodable = true;
     }
 }

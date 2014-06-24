@@ -3,6 +3,9 @@ using System.Collections;
 
 public abstract class Block
 {
+
+    #region BLOCK TYPES
+
     // block ids
     public static readonly ushort AIR = 0;
     public static readonly ushort BEDROCK = 1;
@@ -11,7 +14,7 @@ public abstract class Block
     public static readonly ushort GRASS = 8;
     public static readonly ushort ROCKY_DIRT = 9;
     public static readonly ushort SAND = 10;
-    public static readonly ushort[] WATER = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+    public static readonly ushort[] WATER = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 
     // array of instances of all block types
     private static Block[] blocks;
@@ -30,6 +33,12 @@ public abstract class Block
         blocks[SAND] = new BlockSand();
         for (uint i = 0; i < WATER.Length; i++)
             blocks[WATER[i]] = new BlockWater(i);
+
+        for (int i = 0; i < blocks.Length; i++)
+        {
+            if (blocks[i] != null)
+                blocks[i].id = (ushort) i;
+        }
     }
 
     /** Get an instance of Block corresponding to the ID given */
@@ -38,9 +47,19 @@ public abstract class Block
         return blocks[id];
     }
 
-    /*
-     * Block Parameters
-     */
+    /** This block's unique id */
+    private ushort id;
+    public ushort MyID
+    {
+        get
+        {
+            return id;
+        }
+    }
+
+    #endregion
+
+    #region BLOCK PARAMETERS
 
     /** Does this block stop light? */
     public bool opaque = true;
@@ -60,9 +79,12 @@ public abstract class Block
     /** Is this block impossible to break by a player? */
     public bool indestructable = false;
 
-    /*
-     * Block Events
-     */
+    /** Can this block be overridded by a liquid? */
+    public bool floodable = false;
+
+    #endregion
+
+    #region BLOCK EVENTS
 
     /** Called when the block is replaced by another block or air */
     public virtual void OnBreak(World world, int x, int y, int z, ushort newBlock) { }
@@ -72,4 +94,9 @@ public abstract class Block
 
     /** Called at random intervals, roughly once every 5 mins per block */
     public virtual void Tick(World world, int x, int y, int z) { }
+
+    /** Called whenever a local block is changed (including itself) */
+    public virtual void Notify(World world, int x, int y, int z) { }
+
+    #endregion
 }

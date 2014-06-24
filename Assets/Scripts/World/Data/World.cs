@@ -403,13 +403,14 @@ public class World
             }
         }
 
-        // mark the chunks as modified
+        // notify neighboring blocks and mark the chunks as modified
         for (int x = worldX - 1; x <= worldX + 1; x++)
         {
             for (int y = worldY - 1; y <= worldY + 1; y++)
             {
                 for (int z = worldZ - 1; z <= worldZ + 1; z++)
                 {
+                    Block.GetInstance(GetBlockAt(x, y, z, Block.AIR)).Notify(this, x, y, z);
                     MarkModified(MiscMath.WorldToChunkCoords(x, y, z));
                 }
             }
