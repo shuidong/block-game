@@ -50,7 +50,7 @@ public class Column : ISerializable
     }
 
     /** Serialize this column */
-    public void GetObjectData(SerializationInfo info, StreamingContext ctxt)
+    public virtual void GetObjectData(SerializationInfo info, StreamingContext ctxt)
     {
         info.AddValue(Constants.KEY_SAVE_VERSION, Constants.SAVE_VERSION_ORIG);
         info.AddValue(KEY_BLOCK_IDS, blockID);

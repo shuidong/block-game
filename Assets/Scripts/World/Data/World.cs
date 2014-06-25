@@ -148,11 +148,14 @@ public class World
         List<Vector2i> removal = new List<Vector2i>();
 
         // mark positions for removal
-        foreach (Vector2i pos in loadedData.Keys)
+        lock (this)
         {
-            if (pos.x < xMin || pos.z < zMin || pos.x > xMax || pos.z > zMax)
+            foreach (Vector2i pos in loadedData.Keys)
             {
-                removal.Add(pos);
+                if (pos.x < xMin || pos.z < zMin || pos.x > xMax || pos.z > zMax)
+                {
+                    removal.Add(pos);
+                }
             }
         }
 
@@ -367,7 +370,7 @@ public class World
 
                     // sunbeam
                     h = worldY;
-                    byte currentLight = GetLightAt(worldX, h+1, worldZ, 0);
+                    byte currentLight = GetLightAt(worldX, h + 1, worldZ, 0);
                     Block hBlock = Block.GetInstance(GetBlockAt(worldX, h, worldZ, Block.DIRT));
                     do
                     {
@@ -630,7 +633,7 @@ public class World
             Stream stream = File.Open(fileName, FileMode.OpenOrCreate);
             BinaryFormatter bformatter = new BinaryFormatter();
             bformatter.Binder = new VersionDeserializationBinder();
-            bformatter.Serialize(stream, loadedData[pos]);
+            lock (this) bformatter.Serialize(stream, loadedData[pos]);
             stream.Close();
         }
         catch (System.Exception e)
@@ -674,7 +677,7 @@ public class World
             foreach (Vector2i pos in renderedData)
             {
                 Column col;
-                if(loadedData.TryGetValue(pos, out col))
+                if (loadedData.TryGetValue(pos, out col))
                     col.TickBlock(this, pos);
             }
         }

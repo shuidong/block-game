@@ -56,10 +56,10 @@ public class SingleMeshBuildInfo
         uv.Clear();
         colors.Clear();
 
-        verticesArray = null;
-        trianglesArray = null;
-        uvArray = null;
-        colorsArray = null;
+        verticesArray = new Vector3[0];
+        trianglesArray = new int[0];
+        uvArray = new Vector2[0];
+        colorsArray = new Color[0];
         faceCount = 0;
     }
 
