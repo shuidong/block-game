@@ -219,9 +219,6 @@ public class WorldController : MonoBehaviour
 
             // instantiate the chunk
             Vector3 position = new Vector3(worldX, worldY, worldZ);
-            Quaternion rotation = Quaternion.identity;
-
-            // instantiate
             string name = System.String.Format(" Chunk at ({0}, {1}, {2})", pos.x, y, pos.z);
             ChunkRenderer opaque = MakeChunk(position, "Opaque" + name, meshes[y].opaque, opaqueMaterial);
             ChunkRenderer transparent = MakeChunk(position, "Transparent" + name, meshes[y].transparent, transparentMaterial);
