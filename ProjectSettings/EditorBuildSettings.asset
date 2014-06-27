@@ -6,6 +6,4 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Levels/Loader.unity
-  - enabled: 1
-    path: Assets/Levels/VoxelTest.unity
+    path: Assets/Project Assets/Levels/VoxelTest.unity
