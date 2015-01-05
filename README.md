@@ -1,3 +1,3 @@
 # README #
 
-A block based game in Unity3D. More info to come.
+A voxel engine with procedural infinite terrain in Unity3D
